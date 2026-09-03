@@ -15,8 +15,9 @@ import { IExpressionError } from "./expressions/expressionError";
 import { expressionObjectCachedValue } from "./functionsfactory";
 import { getLocaleString } from "./surveyStrings";
 import { ConsoleWarnings } from "./console-warnings";
-import { IObjectValueContext, IValueGetterContext, VariableGetterContext } from "./conditions/conditionProcessValue";
+import { IObjectValueContext, IValueGetterContext, ValueGetter, VariableGetterContext } from "./conditions/conditionProcessValue";
 import { EventBase, Event } from "./event";
+import { SurveyIdGenerator } from "./survey-id-generator";
 
 export interface IPropertyValueChangedEvent {
   name: string;
@@ -32,6 +33,8 @@ export interface IPropertyArrayValueChangedEvent {
 interface IExpressionRunnerInfo {
   onExecute: (obj: Base, res: any) => void;
   canRun?: (obj: Base) => boolean;
+  useStrictDependencies?: boolean;
+  onReset?: (obj: Base) => void;
 }
 
 export interface IExpressionValidationOptions {
@@ -42,6 +45,7 @@ export interface IExpressionValidationOptions {
 
 /**
  * An interface that describes the result returned by the [`validateExpressions`](https://surveyjs.io/form-library/documentation/api-reference/survey-data-model#validateExpressions) method.
+ * @since 2.5.7
  */
 export interface IExpressionValidationResult {
   /**
@@ -234,7 +238,14 @@ export class ComputedUpdater<T = any> {
  */
 export class Base implements IObjectValueContext {
   private static UniqueId = 0;
-  private uniqueIdValue: number = (Base.UniqueId++);
+  private uniqueIdValue: number = Base.UniqueId++;
+  private static defaultIdGeneratorValue: SurveyIdGenerator;
+  public static get defaultIdGenerator(): SurveyIdGenerator {
+    if (!Base.defaultIdGeneratorValue) {
+      Base.defaultIdGeneratorValue = new SurveyIdGenerator();
+    }
+    return Base.defaultIdGeneratorValue;
+  }
   private static currentDependencis: Dependencies = undefined;
   public static finishCollectDependencies(): Dependencies {
     const deps = Base.currentDependencis;
@@ -395,7 +406,30 @@ export class Base implements IObjectValueContext {
   public get isDisposed(): boolean {
     return this.isDisposedValue === true;
   }
-  public get uniqueId(): number { return this.uniqueIdValue; }
+  public get uniqueId(): number {
+    return this.uniqueIdValue;
+  }
+  public static getIdGeneratorBySurvey(survey: any): SurveyIdGenerator {
+    return (survey && survey.idGenerator) || Base.defaultIdGenerator;
+  }
+  protected getIdGenerator(): SurveyIdGenerator {
+    return Base.getIdGeneratorBySurvey(this.getSurvey());
+  }
+  protected getIdPrefix(): string { return this.getType(); }
+  public get id(): string {
+    return this.getPropertyValue("id", undefined, () => this.generateElementId());
+  }
+  public set id(val: string) { this.setPropertyValue("id", val); }
+  protected generateElementId(): string {
+    return this.getIdGenerator().next(this.getIdPrefix());
+  }
+  protected composeElementId(id: string): string {
+    const survey = this.getSurvey();
+    return survey ? survey.getElementId(id) : id;
+  }
+  public get renderedId(): string {
+    return this.composeElementId(this.id);
+  }
   public get isSurveyObj(): boolean { return true; }
   protected addEvent<T, Options = any>(onCallbacksChanged?: () => void): EventBase<T, Options> {
     const res = new EventBase<T, Options>();
@@ -418,6 +452,7 @@ export class Base implements IObjectValueContext {
   /**
    * Returns the survey element that owns this element. Returns `undefined` if called on a `SurveyModel` instance.
    * @returns The owner survey element, or `undefined` if none exists.
+   * @since 2.5.8
    */
   public getOwner(): any {
     return undefined;
@@ -467,7 +502,12 @@ export class Base implements IObjectValueContext {
   }
   public getValueGetterContext(): IValueGetterContext {
     const survey = <IObjectValueContext><any>this.getSurvey();
-    return !!survey ? survey.getValueGetterContext() : new VariableGetterContext({});
+    if (!survey) return new VariableGetterContext({});
+    const surveyContext = survey.getValueGetterContext();
+    if (!surveyContext || !surveyContext.getObj) return surveyContext;
+    const self = this;
+    surveyContext.getObj = () => self;
+    return surveyContext;
   }
   /**
    * Returns `true` if the survey is being designed in Survey Creator.
@@ -532,7 +572,9 @@ export class Base implements IObjectValueContext {
     if (orgObj !== obj && org !== this) {
       org.mergeLocalizationObj(orgObj, locales);
     }
+    this.mergeLocalizationWithInnerObjects(obj, locales);
   }
+  protected mergeLocalizationWithInnerObjects(_src: Base, _locales?: Array<string>): void {}
   private mergeLocalizationInObjectCore(obj: Base, locales?: Array<string>): void {
     if (!this.canMergeObj(obj)) return;
     const locStrs = obj.localizableStrings;
@@ -587,6 +629,7 @@ export class Base implements IObjectValueContext {
    * To apply a locale-strings-only schema to a survey model, call the [`mergeLocalizationJSON(json, locales)`](https://surveyjs.io/form-library/documentation/api-reference/survey-data-model#mergeLocalizationJSON) method.
    * @param locales *(Optional)* An array of locale identifiers to include in the JSON schema.
    * @returns A locale-strings-only JSON schema.
+   * @since 2.5.4
    */
   public getLocalizationJSON(locales?: Array<string>): any {
     return this.toJSON({ storeLocaleStrings: "stringsOnly", locales: locales });
@@ -714,8 +757,15 @@ export class Base implements IObjectValueContext {
     if (!!prop.defaultValueFunc) return prop.defaultValueFunc(this);
     const dValue = prop.getDefaultValue(this);
     if (!this.isValueUndefined(dValue) && !Array.isArray(dValue)) return dValue;
-    const locStr = this.localizableStrings ? this.localizableStrings[name] : undefined;
-    if (locStr && locStr.localizationName) return this.getLocalizationString(locStr.localizationName);
+    let locStr = this.localizableStrings ? this.localizableStrings[name] : undefined;
+    if (!locStr && prop.isLocalizable && !!prop.serializationProperty) {
+      //localizable strings declared via the property decorator are created on the first access
+      locStr = (<any>this)[prop.serializationProperty];
+    }
+    if (locStr && locStr.localizationName) {
+      const defaultStr = this.getLocalizationString(locStr.localizationName);
+      if (!!defaultStr) return defaultStr;
+    }
     if (prop.type == "boolean" || prop.type == "switch") return false;
     if (prop.isCustom && !!prop.onGetValue) return prop.onGetValue(this);
     return undefined;
@@ -903,11 +953,11 @@ export class Base implements IObjectValueContext {
       this.isFuncExecuting = false;
     }
   }
-  protected onPropertyValueChanged(name: string, oldValue: any, newValue: any): void { }
+  protected onPropertyValueChanged(name: string, oldValue: any, newValue: any, arrayChanges?: ArrayChanges): void { }
   protected propertyValueChanged(name: string, oldValue: any, newValue: any, arrayChanges?: ArrayChanges, target?: Base): void {
     if (this.isLoadingFromJson) return;
     this.updateBindings(name, newValue);
-    this.onPropertyValueChanged(name, oldValue, newValue);
+    this.onPropertyValueChanged(name, oldValue, newValue, arrayChanges);
     this.onPropertyChanged.fire(this, {
       name: name,
       oldValue: oldValue,
@@ -960,14 +1010,14 @@ export class Base implements IObjectValueContext {
       fireCallback(this);
     }
   }
-  public addExpressionProperty(name: string, onExecute: (obj: Base, res: any) => void, canRun?: (obj: Base) => boolean): void {
+  public addExpressionProperty(name: string, onExecute: (obj: Base, res: any) => void, canRun?: (obj: Base) => boolean, useStrictDependencies?: boolean, onReset?: (obj: Base) => void): void {
     if (!this.expressionInfo) {
       this.expressionInfo = {};
     }
-    this.expressionInfo[name] = { onExecute: onExecute, canRun: canRun };
+    this.expressionInfo[name] = { onExecute: onExecute, canRun: canRun, useStrictDependencies: useStrictDependencies, onReset: onReset };
   }
-  public validateExpression(name: string, expression: string, options: IExpressionValidationOptions): IExpressionValidationResult {
-    if (!expression) return;
+  public validateExpression(name: string, expression: string, options: IExpressionValidationOptions): IExpressionValidationResult | undefined {
+    if (!expression) return undefined;
     const prop = this.getPropertyByName(name);
     const isCondition = !!prop && prop.type == "condition";
     const runner = this.createExpressionRunner(expression);
@@ -1010,6 +1060,7 @@ export class Base implements IObjectValueContext {
    * @param {boolean} options.functions Pass `false` to disable validation of unknown functions.
    * @param {boolean} options.semantics Pass `false` to disable validation of semantic errors.
    * @returns An [`IExpressionValidationResult`](https://surveyjs.io/form-library/documentation/api-reference/IExpressionValidationResult) array.
+   * @since 2.5.7
    */
   public validateExpressions(options: IExpressionValidationOptions = { functions: true, variables: true, semantics: true }): IExpressionValidationResult[] {
     const result: IExpressionValidationResult[] = [];
@@ -1047,6 +1098,11 @@ export class Base implements IObjectValueContext {
   private checkConditionPropertyChanged(propName: string): void {
     if (!this.expressionInfo || !this.expressionInfo[propName]) return;
     if (!this.canRunConditions()) return;
+    const info = this.expressionInfo[propName];
+    if (!this.getPropertyValue(propName)) {
+      if (info.onReset) info.onReset(this);
+      return;
+    }
     this.runConditionItemCore(propName, this.getDataFilteredProperties());
   }
   private runConditionItemCore(propName: string, properties: HashTable<any>): void {
@@ -1054,9 +1110,23 @@ export class Base implements IObjectValueContext {
     const expression = this.getPropertyValue(propName);
     if (!expression) return;
     if (!!info.canRun && !info.canRun(this)) return;
+    if (info.useStrictDependencies && this.canSkipRunningExpression(propName)) return;
     this.runExpressionByProperty(propName, properties, (res) => {
       info.onExecute(this, res);
     });
+  }
+  protected canSkipRunningExpression(propName: string): boolean {
+    const survey: any = this.getSurvey();
+    const keys = !!survey && typeof survey.getValueChangedKeys === "function" ? survey.getValueChangedKeys() : undefined;
+    if (!keys) return false;
+    return this.canSkipExpressionByKeys(this.getExpressionByProperty(propName), keys);
+  }
+  protected canSkipExpressionByKeys(runner: ExpressionRunner, keys: any, vars?: string[]): boolean {
+    if (!keys) return false;
+    if (!!runner && runner.hasFunction(true)) return false;
+    if (vars === undefined) vars = !!runner ? runner.getVariables() : [];
+    if (!Array.isArray(vars) || vars.length === 0) return false;
+    return !new ValueGetter().isAnyKeyChanged(keys, vars);
   }
   private asynExpressionHash: any;
   private doBeforeAsynRun(id: number): void {
@@ -1076,11 +1146,19 @@ export class Base implements IObjectValueContext {
     }
   }
   protected onAsyncRunningChanged(): void { }
+  // Stable read-only state: true while an asynchronous expression of this object is in flight.
+  // SurveyModel.getRunningAsyncOperations() reads it on every expression owner, so a rename or a
+  // semantics change here is a breaking change of that API.
   public get isAsyncExpressionRunning(): boolean {
     return !!this.asynExpressionHash && Object.keys(this.asynExpressionHash).length > 0;
   }
+  private asyncRunIdCounter: number = 0;
   protected createExpressionRunner(expression: string): ExpressionRunner {
     const res = new ExpressionRunner(expression);
+    // The run id correlates async start/complete callbacks within this object's asynExpressionHash.
+    // Source it from a per-owner counter so it is unique across all of this object's runners without
+    // relying on a module-level static.
+    res.getRunId = (): number => ++this.asyncRunIdCounter;
     res.onBeforeAsyncRun = (id: number): void => { this.doBeforeAsynRun(id); };
     res.onAfterAsyncRun = (id: number): void => { this.doAfterAsynRun(id); };
     return res;
@@ -1100,12 +1178,17 @@ export class Base implements IObjectValueContext {
       const info = this.getExpressionInfoByProperty(propName, expression);
       const runner = info.runner;
       if (!info.isRunning && (!canRun || canRun(runner))) {
+        const doRun = () => runner.runContext(this.getValueGetterContext(), this.getPropertiesCopy(properties, propName));
+        if (!runner.canRun()) {
+          doRun();
+          return false;
+        }
         info.isRunning = true;
         runner.onRunComplete = (value: any) => {
           onExecute(value);
           info.isRunning = false;
         };
-        runner.runContext(this.getValueGetterContext(), this.getPropertiesCopy(properties, propName));
+        doRun();
       }
     }
     return true;
@@ -1121,7 +1204,11 @@ export class Base implements IObjectValueContext {
     return copy;
   }
   protected getExpressionByProperty(propName: string): ExpressionRunner {
-    const expression = this.getExpressionFromSurvey(propName);
+    // Use the raw property value: resolving it via getExpressionFromSurvey would fire
+    // survey.onExpressionRunning for a dependency check without an actual run. When the
+    // event has subscribers that may rewrite expressions, dependency checks are disabled
+    // entirely (see SurveyModel.getValueChangedKeys).
+    const expression = this[propName];
     if (!expression) return null;
     return this.getExpressionInfoByProperty(propName, expression).runner;
   }
@@ -1195,7 +1282,7 @@ export class Base implements IObjectValueContext {
   }
   public addPropertyDependency(obj: Base, propertyName: string): void {
     if (!obj || !propertyName || !(obj instanceof Base)) return;
-    const id = this.uniqueId + "_" + propertyName;
+    const id = this.uniqueId + "_" + obj.uniqueId + "_" + propertyName;
     if (!this.expressionDependencies[id]) {
       obj.registerFunctionOnPropertyValueChanged(propertyName, () => {
         this.onDependencyValueChanged(obj, propertyName);

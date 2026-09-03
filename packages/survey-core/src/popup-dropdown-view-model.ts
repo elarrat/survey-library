@@ -4,15 +4,15 @@ import { CssClassBuilder } from "./utils/cssClassBuilder";
 import { PopupModel } from "./popup";
 import { PopupBaseViewModel } from "./popup-view-model";
 import { IsTouch } from "./utils/devices";
-import { settings } from "./settings";
 import { SurveyModel } from "./survey";
 import { DomDocumentHelper, DomWindowHelper } from "./global_variables_utils";
 import { IAction } from "./actions/action";
-import { defaultActionBarCss } from "./actions/container";
-import { getRootNode } from "./utils/dom-utils";
+import { defaultActionBarCss } from "./actions/actionBarCss";
+import { findScrollableParent, getRootNode } from "./utils/dom-utils";
 
 export class PopupDropdownViewModel extends PopupBaseViewModel {
   static readonly tabletSizeBreakpoint = 600;
+  private scrollEventTargets: Array<EventTarget> = undefined;
   private scrollEventCallBack = (event: any) => {
     if (this.isOverlay && IsTouch) {
       event.stopPropagation();
@@ -21,13 +21,16 @@ export class PopupDropdownViewModel extends PopupBaseViewModel {
     }
     this.hidePopup();
   };
-  private resizeEventCallback = () => {
+  private visualViewportChangedCallback = () => {
     if (!DomWindowHelper.isAvailable()) return;
 
     const visualViewport = DomWindowHelper.getVisualViewport();
     const documentElement = DomDocumentHelper.getDocumentElement();
     if (!!documentElement && !!visualViewport) {
-      documentElement.style.setProperty("--sv-popup-overlay-height", `${visualViewport.height * visualViewport.scale}px`);
+      const scale = visualViewport.scale || 1;
+      documentElement.style.setProperty("--sv-popup-overlay-height", `${visualViewport.height * scale}px`);
+      const offsetTop = scale === 1 ? visualViewport.offsetTop : 0;
+      documentElement.style.setProperty("--sv-popup-overlay-top", `${offsetTop}px`);
     }
   };
   private resizeWindowCallback = () => {
@@ -46,20 +49,14 @@ export class PopupDropdownViewModel extends PopupBaseViewModel {
 
   protected createFooterActionBar(): void {
     super.createFooterActionBar();
-    this.footerToolbar.setCssClasses({
-      root: defaultActionBarCss.root,
-      defaultSizeMode: defaultActionBarCss.defaultSizeMode,
-      smallSizeMode: defaultActionBarCss.smallSizeMode,
-      item: "sd-action sv-menu-popup__button"
-    }, false);
-
+    this.footerToolbar.setActionsAppearance({ style: "brand", mode: "tertiary", size: "small" });
     this.footerToolbar.containerCss = "sv-menu-footer-action-bar";
     let footerActions = [
       <IAction>{
         id: "cancel",
         visibleIndex: 10,
         title: this.cancelButtonText,
-        innerCss: "sv-popup__button--cancel",
+        innerCss: "sv-popup__button sv-popup__button--cancel",
         action: () => { this.cancel(); }
       }
     ];
@@ -76,16 +73,48 @@ export class PopupDropdownViewModel extends PopupBaseViewModel {
     }
     return new Rect(0, 0, DomWindowHelper.getInnerWidth(), DomWindowHelper.getInnerHeight());
   }
-  protected getTargetElementRect(areaRect: Rect): Rect {
+  protected getTargetElement(): HTMLElement {
     const componentRoot = this.container;
     let targetElement: HTMLElement = this.model.getTargetCallback ? this.model.getTargetCallback(componentRoot) : undefined;
 
     if (!!componentRoot && !!componentRoot.parentElement && !this.isModal && !targetElement) {
       targetElement = componentRoot.parentElement;
     }
+    return targetElement;
+  }
+  protected getTargetElementRect(areaRect: Rect): Rect {
+    const targetElement = this.getTargetElement();
     if (!targetElement) return null;
     const rect = targetElement.getBoundingClientRect();
     return new Rect(rect.left - areaRect.left, rect.top - areaRect.top, rect.width, rect.height);
+  }
+
+  private getScrollEventTargets(): Array<EventTarget> {
+    const targets: Array<EventTarget> = [];
+    const win = DomWindowHelper.getWindow();
+    if (!!win) targets.push(win);
+
+    const targetElement = this.getTargetElement();
+    if (!targetElement) return targets;
+
+    const docElement = DomDocumentHelper.getDocumentElement();
+    let current: Element = targetElement.parentElement;
+    while(!!current && current !== docElement) {
+      const scrollableParent = findScrollableParent(current);
+      if (!scrollableParent || scrollableParent === docElement || !scrollableParent.addEventListener) break;
+      targets.push(scrollableParent);
+      current = scrollableParent.parentElement;
+    }
+    return targets;
+  }
+  private subscribeOnScrollEvents(): void {
+    this.scrollEventTargets = this.getScrollEventTargets();
+    this.scrollEventTargets.forEach(target => target.addEventListener("scroll", this.scrollEventCallBack));
+  }
+  private unsubscribeFromScrollEvents(): void {
+    if (!this.scrollEventTargets) return;
+    this.scrollEventTargets.forEach(target => target.removeEventListener("scroll", this.scrollEventCallBack));
+    this.scrollEventTargets = undefined;
   }
 
   private _updatePosition() {
@@ -97,6 +126,7 @@ export class PopupDropdownViewModel extends PopupBaseViewModel {
     const fixedPopupContainer = <HTMLElement>this.container?.querySelector(this.fixedPopupContainer) as HTMLElement;
     const scrollContent = <HTMLElement>popupContainer.querySelector(this.scrollingContentSelector);
     const popupComputedStyle = DomDocumentHelper.getComputedStyle(popupContainer);
+    if (!popupComputedStyle) return;
     const marginLeft = (parseFloat(popupComputedStyle.marginLeft) || 0);
     const marginRight = (parseFloat(popupComputedStyle.marginRight) || 0);
     const marginTop = (parseFloat(popupComputedStyle.marginTop) || 0);
@@ -201,7 +231,7 @@ export class PopupDropdownViewModel extends PopupBaseViewModel {
   protected getActualHorizontalPosition(): "left" | "center" | "right" {
     let actualHorizontalPosition = this.model.horizontalPosition;
     if (DomDocumentHelper.isAvailable()) {
-      let isRtl = DomDocumentHelper.getComputedStyle(DomDocumentHelper.getBody()).direction == "rtl";
+      let isRtl = DomDocumentHelper.isRtlDirection();
       if (isRtl) {
         if (this.model.horizontalPosition === "left") {
           actualHorizontalPosition = "right";
@@ -257,14 +287,18 @@ export class PopupDropdownViewModel extends PopupBaseViewModel {
     this.switchFocus();
     DomWindowHelper.addEventListener("resize", this.resizeWindowCallback);
     if (this.shouldCreateResizeCallback) {
-      DomWindowHelper.getVisualViewport().addEventListener("resize", this.resizeEventCallback);
+      const visualViewport = DomWindowHelper.getVisualViewport();
+      if (!!visualViewport) {
+        visualViewport.addEventListener("resize", this.visualViewportChangedCallback);
+        visualViewport.addEventListener("scroll", this.visualViewportChangedCallback);
+      }
       if (this.container) {
         this.container.addEventListener("touchstart", this.touchStartEventCallback);
         this.container.addEventListener("touchmove", this.touchMoveEventCallback);
       }
-      this.resizeEventCallback();
+      this.visualViewportChangedCallback();
     }
-    DomWindowHelper.addEventListener("scroll", this.scrollEventCallBack);
+    this.subscribeOnScrollEvents();
     this._isPositionSetValue = true;
   }
   private get shouldCreateResizeCallback(): boolean {
@@ -289,13 +323,17 @@ export class PopupDropdownViewModel extends PopupBaseViewModel {
     super.updateOnHiding();
     DomWindowHelper.removeEventListener("resize", this.resizeWindowCallback);
     if (this.shouldCreateResizeCallback) {
-      DomWindowHelper.getVisualViewport().removeEventListener("resize", this.resizeEventCallback);
+      const visualViewport = DomWindowHelper.getVisualViewport();
+      if (!!visualViewport) {
+        visualViewport.removeEventListener("resize", this.visualViewportChangedCallback);
+        visualViewport.removeEventListener("scroll", this.visualViewportChangedCallback);
+      }
       if (this.container) {
         this.container.removeEventListener("touchstart", this.touchStartEventCallback);
         this.container.removeEventListener("touchmove", this.touchMoveEventCallback);
       }
     }
-    DomWindowHelper.removeEventListener("scroll", this.scrollEventCallBack);
+    this.unsubscribeFromScrollEvents();
 
     if (!this.isDisposed) {
       this.top = undefined;

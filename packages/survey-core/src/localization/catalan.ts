@@ -69,8 +69,12 @@ export var catalanSurveyStrings = {
   stepError: "Introduïu un valor que coincideixi amb la mida del pas de {0}.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "El valor no ha de ser superior a {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Entrada invàlida",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "No es permeten números.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Si us plau, completeu el valor per ajustar-lo al format requerit.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Si us plau entre almenys {0} símbols.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var catalanSurveyStrings = {
   urlGetChoicesError: "La sol·licitud va tornar buida de dates o la propietat 'trajectòria' no és correcta",
   // "The file size should not exceed {0}."
   exceedMaxSize: "La mida de l'arxiu no pot excedir {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bytes, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "El nombre màxim d'arxius que pots pujar és {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "No es poden carregar fitxers. Afegiu un controlador per a l'esdeveniment 'onUploadFiles'.",
   // "Response required: enter another value."
@@ -127,7 +135,7 @@ export var catalanSurveyStrings = {
   noRowsText: "No hi ha files.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Fila {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // [Auto-translated] "Add new"
   addPanel: "Afegeix un nou",
@@ -153,8 +161,6 @@ export var catalanSurveyStrings = {
   savingDataError: "S'ha produït un error i no hem pogut guardar els resultats.",
   // [Auto-translated] "The results were saved successfully!"
   savingDataSuccess: "Els resultats es van salvar amb èxit!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "La teva resposta supera els 64 KB. Reduïu la mida dels fitxers i torneu-ho a provar o poseu-vos en contacte amb el propietari de l'enquesta.",
   // [Auto-translated] "Try again"
   saveAgainButton: "Prova una altra vegada",
   // [Auto-translated] "min"
@@ -238,7 +244,9 @@ export var catalanSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Taula de continguts",
   // [Auto-translated] "Progress bar"
-  progressbar: "Barra de progrés"
+  progressbar: "Barra de progrés",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Pàgina {0}"
 };
 
 setupLocale({ localeCode: "ca", strings: catalanSurveyStrings, nativeName: "català", englishName: "Catalan" });

@@ -4,238 +4,273 @@ import { InputMaskPattern } from "../../src/mask/mask_pattern";
 import { InputMaskCurrency } from "../../src/mask/mask_currency";
 import { InputMaskDateTime } from "../../src/mask/mask_datetime";
 
-export default QUnit.module("Input mask");
+import { describe, test, expect } from "vitest";
+describe("Input mask", () => {
+  test("InputElementAdapter constructor", () => {
+    const testInput = document.createElement("input");
+    const inputMask = new InputMaskCurrency();
+    inputMask.fromJSON({
+      "decimalSeparator": ",",
+      "thousandsSeparator": " ",
+      "suffix": " Eur"
+    });
+    let adapter = new InputElementAdapter(inputMask, testInput, 12345.67);
+    expect(testInput.value).toBe("12 345,67 Eur");
 
-QUnit.test("InputElementAdapter constructor", function (assert) {
-  const testInput = document.createElement("input");
-  const inputMask = new InputMaskCurrency();
-  inputMask.fromJSON({
-    "decimalSeparator": ",",
-    "thousandsSeparator": " ",
-    "suffix": " Eur"
+    adapter = new InputElementAdapter(inputMask, testInput);
+    expect(testInput.value).toBe("");
+
+    adapter = new InputElementAdapter(inputMask, testInput, undefined);
+    expect(testInput.value).toBe("");
+
+    adapter = new InputElementAdapter(inputMask, testInput, null);
+    expect(testInput.value).toBe("");
+
+    testInput.remove();
   });
-  let adapter = new InputElementAdapter(inputMask, testInput, 12345.67);
-  assert.equal(testInput.value, "12 345,67 Eur");
 
-  adapter = new InputElementAdapter(inputMask, testInput);
-  assert.equal(testInput.value, "");
+  test("InputElementAdapter renders the empty mask when saveMaskedValue is set", () => {
+    const testInput = document.createElement("input");
+    const inputMask = new InputMaskDateTime();
+    inputMask.pattern = "mm/dd/yyyy";
+    inputMask.saveMaskedValue = true;
 
-  adapter = new InputElementAdapter(inputMask, testInput, undefined);
-  assert.equal(testInput.value, "");
+    let adapter = new InputElementAdapter(inputMask, testInput, "");
+    expect(testInput.value, "an empty value").toBe("mm/dd/yyyy");
 
-  adapter = new InputElementAdapter(inputMask, testInput, null);
-  assert.equal(testInput.value, "");
+    adapter = new InputElementAdapter(inputMask, testInput, undefined);
+    expect(testInput.value, "no value").toBe("mm/dd/yyyy");
 
-  testInput.remove();
-});
+    adapter = new InputElementAdapter(inputMask, testInput, "12/25/2000");
+    expect(testInput.value, "a stored masked value is displayed as it is").toBe("12/25/2000");
 
-QUnit.test("InputElementAdapter createArgs insertText", function (assert) {
-  const testInput = document.createElement("input");
-  const inputMaskPattern = new InputMaskPattern();
-  inputMaskPattern.pattern = "999";
-  let adapter = new InputElementAdapter(inputMaskPattern, testInput);
-  const target = {
-    selectionStart: 1,
-    selectionEnd: 1,
-    value: "123"
-  };
-  let args = adapter.createArgs({ data: "a", inputType: "insertText", target: target });
-  assert.equal(args.insertedChars, "a");
-  assert.equal(args.selectionStart, 1);
-  assert.equal(args.selectionEnd, 1);
-  assert.equal(args.prevValue, "123");
-  assert.equal(args.inputDirection, "forward");
+    adapter.updateInputElementValue("");
+    expect(testInput.value, "the empty mask returns when the value is cleared").toBe("mm/dd/yyyy");
 
-  testInput.remove();
-});
-
-QUnit.test("InputElementAdapter createArgs deleteContentForward", function (assert) {
-  const testInput = document.createElement("input");
-  const inputMaskPattern = new InputMaskPattern();
-  inputMaskPattern.pattern = "999";
-  let adapter = new InputElementAdapter(inputMaskPattern, testInput);
-  const target = {
-    selectionStart: 1,
-    selectionEnd: 1,
-    value: "123"
-  };
-  let args = adapter.createArgs({ data: null, inputType: "deleteContentForward", target: target });
-  assert.equal(args.insertedChars, null);
-  assert.equal(args.selectionStart, 1);
-  assert.equal(args.selectionEnd, 2);
-  assert.equal(args.prevValue, "123");
-  assert.equal(args.inputDirection, "forward");
-
-  target.selectionStart = 3;
-  target.selectionEnd = 3;
-
-  args = adapter.createArgs({ data: null, inputType: "deleteContentForward", target: target });
-  assert.equal(args.insertedChars, null);
-  assert.equal(args.selectionStart, 3);
-  assert.equal(args.selectionEnd, 4);
-  assert.equal(args.prevValue, "123");
-  assert.equal(args.inputDirection, "forward");
-
-  target.selectionStart = 1;
-  target.selectionEnd = 2;
-
-  args = adapter.createArgs({ data: null, inputType: "deleteContentForward", target: target });
-  assert.equal(args.insertedChars, null);
-  assert.equal(args.selectionStart, 1);
-  assert.equal(args.selectionEnd, 2);
-  assert.equal(args.prevValue, "123");
-  assert.equal(args.inputDirection, "forward");
-
-  testInput.remove();
-});
-
-QUnit.test("InputElementAdapter createArgs deleteContentBackward", function (assert) {
-  const testInput = document.createElement("input");
-  const inputMaskPattern = new InputMaskPattern();
-  inputMaskPattern.pattern = "999";
-  let adapter = new InputElementAdapter(inputMaskPattern, testInput);
-
-  const target = {
-    selectionStart: 1,
-    selectionEnd: 1,
-    value: "123"
-  };
-  let args = adapter.createArgs({ data: null, inputType: "deleteContentBackward", target: target });
-  assert.equal(args.insertedChars, null);
-  assert.equal(args.selectionStart, 0);
-  assert.equal(args.selectionEnd, 1);
-  assert.equal(args.prevValue, "123");
-  assert.equal(args.inputDirection, "backward");
-
-  target.selectionStart = 0;
-  target.selectionEnd = 0;
-  args = adapter.createArgs({ data: null, inputType: "deleteContentBackward", target: target });
-  assert.equal(args.insertedChars, null);
-  assert.equal(args.selectionStart, 0);
-  assert.equal(args.selectionEnd, 0);
-  assert.equal(args.prevValue, "123");
-  assert.equal(args.inputDirection, "backward");
-
-  target.selectionStart = 1;
-  target.selectionEnd = 2;
-  args = adapter.createArgs({ data: null, inputType: "deleteContentBackward", target: target });
-  assert.equal(args.insertedChars, null);
-  assert.equal(args.selectionStart, 1);
-  assert.equal(args.selectionEnd, 2);
-  assert.equal(args.prevValue, "123");
-  assert.equal(args.inputDirection, "backward");
-
-  testInput.remove();
-});
-
-QUnit.test("Change property mask => update display value", function (assert) {
-  const testInput = document.createElement("input");
-  const inputMaskPattern = new InputMaskPattern();
-  inputMaskPattern.pattern = "999";
-  let adapter = new InputElementAdapter(inputMaskPattern, testInput, "123");
-  assert.equal(testInput.value, "123");
-
-  inputMaskPattern.pattern = "9";
-  assert.equal(testInput.value, "1");
-
-  const inputMaskNumeric = new InputMaskNumeric();
-  adapter = new InputElementAdapter(inputMaskNumeric, testInput, "123456");
-  assert.equal(testInput.value, "123,456");
-
-  inputMaskNumeric.thousandsSeparator = " ";
-  assert.equal(testInput.value, "123 456");
-
-  inputMaskNumeric.thousandsSeparator = ",";
-  assert.equal(testInput.value, "123,456");
-
-  testInput.remove();
-});
-
-QUnit.test("Input mask + autocomplete", function (assert) {
-  const testInput = document.createElement("input");
-  const inputMaskPattern = new InputMaskPattern();
-  inputMaskPattern.pattern = "999-99-99";
-  let adapter = new InputElementAdapter(inputMaskPattern, testInput, "");
-  assert.equal(testInput.value, "___-__-__");
-
-  testInput.focus();
-  testInput.value = "+123456789";
-  testInput.dispatchEvent(new Event("change"));
-  assert.equal(testInput.value, "123-45-67");
-
-  testInput.remove();
-});
-QUnit.test("InputElementAdapter saveMaskedValue constructor", function (assert) {
-  const testInput = document.createElement("input");
-  const inputMask = new InputMaskDateTime();
-  inputMask.fromJSON({
-    "pattern": "mm-dd-yyyy",
+    testInput.remove();
   });
-  let adapter = new InputElementAdapter(inputMask, testInput, "1999-01-19");
-  assert.equal(testInput.value, "01-19-1999");
 
-  inputMask.saveMaskedValue = true;
-  adapter = new InputElementAdapter(inputMask, testInput, "01-19-1999");
-  assert.equal(testInput.value, "01-19-1999");
+  test("getMaskedValueBySaveMode renders the empty mask in both save modes", () => {
+    const inputMask = new InputMaskPattern();
+    inputMask.pattern = "+1(999)-999";
+    expect(inputMask.getMaskedValueBySaveMode(""), "an empty value").toBe("+1(___)-___");
+    expect(inputMask.getMaskedValueBySaveMode("+1(123)-456"), "a value").toBe("+1(123)-456");
 
-  testInput.remove();
-});
+    inputMask.saveMaskedValue = true;
+    expect(inputMask.getMaskedValueBySaveMode(""), "an empty value, saveMaskedValue").toBe("+1(___)-___");
+    expect(inputMask.getMaskedValueBySaveMode(undefined), "no value, saveMaskedValue").toBe("+1(___)-___");
+    expect(inputMask.getMaskedValueBySaveMode(null), "a null value, saveMaskedValue").toBe("+1(___)-___");
+    expect(inputMask.getMaskedValueBySaveMode("+1(123)-456"), "a stored masked value").toBe("+1(123)-456");
+  });
 
-QUnit.test("Input mask with placeholder attribute - should hide mask when not focused", function (assert) {
-  const testInput = document.createElement("input");
-  testInput.placeholder = "test";
-  const inputMaskPattern = new InputMaskPattern();
-  inputMaskPattern.pattern = "999-99-99";
-  let adapter = new InputElementAdapter(inputMaskPattern, testInput, "");
+  test("InputElementAdapter createArgs insertText", () => {
+    const testInput = document.createElement("input");
+    const inputMaskPattern = new InputMaskPattern();
+    inputMaskPattern.pattern = "999";
+    let adapter = new InputElementAdapter(inputMaskPattern, testInput);
+    const target = {
+      selectionStart: 1,
+      selectionEnd: 1,
+      value: "123"
+    };
+    let args = adapter.createArgs({ data: "a", inputType: "insertText", target: target });
+    expect(args.insertedChars).toBe("a");
+    expect(args.selectionStart).toBe(1);
+    expect(args.selectionEnd).toBe(1);
+    expect(args.prevValue).toBe("123");
+    expect(args.inputDirection).toBe("forward");
 
-  assert.equal(testInput.placeholder, "test", "#1");
-  assert.equal(testInput.value, "", "value is empty before focus");
+    testInput.remove();
+  });
 
-  testInput.dispatchEvent(new Event("focus"));
-  assert.equal(testInput.placeholder, "test", "#2");
-  assert.equal(testInput.value, "___-__-__", "Mask visible when focused");
+  test("InputElementAdapter createArgs deleteContentForward", () => {
+    const testInput = document.createElement("input");
+    const inputMaskPattern = new InputMaskPattern();
+    inputMaskPattern.pattern = "999";
+    let adapter = new InputElementAdapter(inputMaskPattern, testInput);
+    const target = {
+      selectionStart: 1,
+      selectionEnd: 1,
+      value: "123"
+    };
+    let args = adapter.createArgs({ data: null, inputType: "deleteContentForward", target: target });
+    expect(args.insertedChars).toBeNull();
+    expect(args.selectionStart).toBe(1);
+    expect(args.selectionEnd).toBe(2);
+    expect(args.prevValue).toBe("123");
+    expect(args.inputDirection).toBe("forward");
 
-  testInput.dispatchEvent(new Event("blur"));
-  assert.equal(testInput.placeholder, "test", "#3");
-  assert.equal(testInput.value, "", "value is empty after blur");
+    target.selectionStart = 3;
+    target.selectionEnd = 3;
 
-  testInput.value = "123-45-78";
-  testInput.dispatchEvent(new Event("focus"));
-  assert.equal(testInput.placeholder, "test", "#4");
-  assert.equal(testInput.value, "123-45-78", "focused");
+    args = adapter.createArgs({ data: null, inputType: "deleteContentForward", target: target });
+    expect(args.insertedChars).toBeNull();
+    expect(args.selectionStart).toBe(3);
+    expect(args.selectionEnd).toBe(4);
+    expect(args.prevValue).toBe("123");
+    expect(args.inputDirection).toBe("forward");
 
-  testInput.dispatchEvent(new Event("blur"));
-  assert.equal(testInput.placeholder, "test", "#5");
-  assert.equal(testInput.value, "123-45-78", "blur");
+    target.selectionStart = 1;
+    target.selectionEnd = 2;
 
-  testInput.remove();
-});
+    args = adapter.createArgs({ data: null, inputType: "deleteContentForward", target: target });
+    expect(args.insertedChars).toBeNull();
+    expect(args.selectionStart).toBe(1);
+    expect(args.selectionEnd).toBe(2);
+    expect(args.prevValue).toBe("123");
+    expect(args.inputDirection).toBe("forward");
 
-QUnit.test("Input mask without placeholder attribute - should show mask always", function (assert) {
-  const testInput = document.createElement("input");
-  const inputMaskPattern = new InputMaskPattern();
-  inputMaskPattern.pattern = "999-99-99";
-  let adapter = new InputElementAdapter(inputMaskPattern, testInput, "");
+    testInput.remove();
+  });
 
-  assert.equal(testInput.placeholder, "", "#1");
-  assert.equal(testInput.value, "___-__-__", "#1");
+  test("InputElementAdapter createArgs deleteContentBackward", () => {
+    const testInput = document.createElement("input");
+    const inputMaskPattern = new InputMaskPattern();
+    inputMaskPattern.pattern = "999";
+    let adapter = new InputElementAdapter(inputMaskPattern, testInput);
 
-  testInput.dispatchEvent(new Event("focus"));
-  assert.equal(testInput.placeholder, "", "#2");
-  assert.equal(testInput.value, "___-__-__", "#2");
+    const target = {
+      selectionStart: 1,
+      selectionEnd: 1,
+      value: "123"
+    };
+    let args = adapter.createArgs({ data: null, inputType: "deleteContentBackward", target: target });
+    expect(args.insertedChars).toBeNull();
+    expect(args.selectionStart).toBe(0);
+    expect(args.selectionEnd).toBe(1);
+    expect(args.prevValue).toBe("123");
+    expect(args.inputDirection).toBe("backward");
 
-  testInput.dispatchEvent(new Event("blur"));
-  assert.equal(testInput.placeholder, "", "#3");
-  assert.equal(testInput.value, "___-__-__", "#3");
+    target.selectionStart = 0;
+    target.selectionEnd = 0;
+    args = adapter.createArgs({ data: null, inputType: "deleteContentBackward", target: target });
+    expect(args.insertedChars).toBeNull();
+    expect(args.selectionStart).toBe(0);
+    expect(args.selectionEnd).toBe(0);
+    expect(args.prevValue).toBe("123");
+    expect(args.inputDirection).toBe("backward");
 
-  testInput.value = "123-45-78";
-  testInput.dispatchEvent(new Event("focus"));
-  assert.equal(testInput.placeholder, "", "#4");
-  assert.equal(testInput.value, "123-45-78", "focused");
+    target.selectionStart = 1;
+    target.selectionEnd = 2;
+    args = adapter.createArgs({ data: null, inputType: "deleteContentBackward", target: target });
+    expect(args.insertedChars).toBeNull();
+    expect(args.selectionStart).toBe(1);
+    expect(args.selectionEnd).toBe(2);
+    expect(args.prevValue).toBe("123");
+    expect(args.inputDirection).toBe("backward");
 
-  testInput.dispatchEvent(new Event("blur"));
-  assert.equal(testInput.placeholder, "", "#5");
-  assert.equal(testInput.value, "123-45-78", "blur");
+    testInput.remove();
+  });
 
-  testInput.remove();
+  test("Change property mask => update display value", () => {
+    const testInput = document.createElement("input");
+    const inputMaskPattern = new InputMaskPattern();
+    inputMaskPattern.pattern = "999";
+    let adapter = new InputElementAdapter(inputMaskPattern, testInput, "123");
+    expect(testInput.value).toBe("123");
+
+    inputMaskPattern.pattern = "9";
+    expect(testInput.value).toBe("1");
+
+    const inputMaskNumeric = new InputMaskNumeric();
+    adapter = new InputElementAdapter(inputMaskNumeric, testInput, "123456");
+    expect(testInput.value).toBe("123,456");
+
+    inputMaskNumeric.thousandsSeparator = " ";
+    expect(testInput.value).toBe("123 456");
+
+    inputMaskNumeric.thousandsSeparator = ",";
+    expect(testInput.value).toBe("123,456");
+
+    testInput.remove();
+  });
+
+  test("Input mask + autocomplete", () => {
+    const testInput = document.createElement("input");
+    const inputMaskPattern = new InputMaskPattern();
+    inputMaskPattern.pattern = "999-99-99";
+    let adapter = new InputElementAdapter(inputMaskPattern, testInput, "");
+    expect(testInput.value).toBe("___-__-__");
+
+    testInput.focus();
+    testInput.value = "+123456789";
+    testInput.dispatchEvent(new Event("change"));
+    expect(testInput.value).toBe("123-45-67");
+
+    testInput.remove();
+  });
+  test("InputElementAdapter saveMaskedValue constructor", () => {
+    const testInput = document.createElement("input");
+    const inputMask = new InputMaskDateTime();
+    inputMask.fromJSON({
+      "pattern": "mm-dd-yyyy",
+    });
+    let adapter = new InputElementAdapter(inputMask, testInput, "1999-01-19");
+    expect(testInput.value).toBe("01-19-1999");
+
+    inputMask.saveMaskedValue = true;
+    adapter = new InputElementAdapter(inputMask, testInput, "01-19-1999");
+    expect(testInput.value).toBe("01-19-1999");
+
+    testInput.remove();
+  });
+
+  test("Input mask with placeholder attribute - should hide mask when not focused", () => {
+    const testInput = document.createElement("input");
+    testInput.placeholder = "test";
+    const inputMaskPattern = new InputMaskPattern();
+    inputMaskPattern.pattern = "999-99-99";
+    let adapter = new InputElementAdapter(inputMaskPattern, testInput, "");
+
+    expect(testInput.placeholder, "#1").toBe("test");
+    expect(testInput.value, "value is empty before focus").toBe("");
+
+    testInput.dispatchEvent(new Event("focus"));
+    expect(testInput.placeholder, "#2").toBe("test");
+    expect(testInput.value, "Mask visible when focused").toBe("___-__-__");
+
+    testInput.dispatchEvent(new Event("blur"));
+    expect(testInput.placeholder, "#3").toBe("test");
+    expect(testInput.value, "value is empty after blur").toBe("");
+
+    testInput.value = "123-45-78";
+    testInput.dispatchEvent(new Event("focus"));
+    expect(testInput.placeholder, "#4").toBe("test");
+    expect(testInput.value, "focused").toBe("123-45-78");
+
+    testInput.dispatchEvent(new Event("blur"));
+    expect(testInput.placeholder, "#5").toBe("test");
+    expect(testInput.value, "blur").toBe("123-45-78");
+
+    testInput.remove();
+  });
+
+  test("Input mask without placeholder attribute - should show mask always", () => {
+    const testInput = document.createElement("input");
+    const inputMaskPattern = new InputMaskPattern();
+    inputMaskPattern.pattern = "999-99-99";
+    let adapter = new InputElementAdapter(inputMaskPattern, testInput, "");
+
+    expect(testInput.placeholder, "#1").toBe("");
+    expect(testInput.value, "#1").toBe("___-__-__");
+
+    testInput.dispatchEvent(new Event("focus"));
+    expect(testInput.placeholder, "#2").toBe("");
+    expect(testInput.value, "#2").toBe("___-__-__");
+
+    testInput.dispatchEvent(new Event("blur"));
+    expect(testInput.placeholder, "#3").toBe("");
+    expect(testInput.value, "#3").toBe("___-__-__");
+
+    testInput.value = "123-45-78";
+    testInput.dispatchEvent(new Event("focus"));
+    expect(testInput.placeholder, "#4").toBe("");
+    expect(testInput.value, "focused").toBe("123-45-78");
+
+    testInput.dispatchEvent(new Event("blur"));
+    expect(testInput.placeholder, "#5").toBe("");
+    expect(testInput.value, "blur").toBe("123-45-78");
+
+    testInput.remove();
+  });
 });

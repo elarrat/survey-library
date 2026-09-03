@@ -1,5 +1,5 @@
 import { Base } from "./base";
-import { HorizontalAlignment, VerticalAlignment } from "./base-interfaces";
+import { HorizontalAlignment, ILayoutElementModel, ISurveyLayoutElement, LayoutElementContainer, VerticalAlignment } from "./base-interfaces";
 import { DomDocumentHelper } from "./global_variables_utils";
 import { Serializer } from "./jsonobject";
 import { property } from "./decorators";
@@ -98,7 +98,7 @@ export class CoverCell {
   }
 }
 
-export class Cover extends Base {
+export class Cover extends Base implements ILayoutElementModel {
   private _survey: SurveyModel;
 
   private calcBackgroundSize(backgroundImageFit: "cover" | "fill" | "contain" | "tile"): string {
@@ -112,15 +112,12 @@ export class Cover extends Base {
   }
   private updateHeaderClasses(): void {
     const backgroundColorNone = !this.backgroundColor || this.backgroundColor === "transparent";
-    const backgroundColorAccent = this.backgroundColor === "var(--sjs-primary-backcolor)";
-    const backgroundColorCustom = !backgroundColorNone && !backgroundColorAccent;
     this.headerClasses = new CssClassBuilder()
       .append("sv-header")
       .append("sv-header--height-auto", !this.renderedHeight)
       .append("sv-header__without-background", backgroundColorNone && !this.backgroundImage)
       .append("sv-header__background-color--none", backgroundColorNone && !this.titleColor && !this.descriptionColor)
-      .append("sv-header__background-color--accent", backgroundColorAccent && !this.titleColor && !this.descriptionColor)
-      .append("sv-header__background-color--custom", backgroundColorCustom && !this.titleColor && !this.descriptionColor)
+      .append("sv-header__background-color--custom", !backgroundColorNone && !this.titleColor && !this.descriptionColor)
       .append("sv-header__overlap", this.overlapEnabled)
       .toString();
   }
@@ -150,9 +147,9 @@ export class Cover extends Base {
   public fromTheme(theme: ITheme): void {
     super.fromJSON(theme.header || {});
     if (!!theme.cssVariables) {
-      this.backgroundColor = theme.cssVariables["--sjs-header-backcolor"];
-      this.titleColor = theme.cssVariables["--sjs-font-headertitle-color"];
-      this.descriptionColor = theme.cssVariables["--sjs-font-headerdescription-color"];
+      this.backgroundColor = theme.cssVariables["--sjs2-color-component-survey-header-default-bg"];
+      this.titleColor = theme.cssVariables["--sjs2-color-component-survey-header-default-title"];
+      this.descriptionColor = theme.cssVariables["--sjs2-color-component-survey-header-default-description"];
     }
     this.init();
   }
@@ -329,20 +326,50 @@ export class Cover extends Base {
     return undefined;
   }
 
+  private isResponsivenessProcessed: boolean | undefined;
   public processResponsiveness(): void {
     if (this.survey && this.survey.rootElement) {
       if (!this.survey.isMobile) {
         const headerEl = this.survey.rootElement.querySelectorAll(".sv-header__content")[0];
         if (!headerEl) return;
+        if (this.isResponsivenessProcessed) {
+          this.isResponsivenessProcessed = false;
+          return;
+        }
 
         let elWidth = headerEl.getBoundingClientRect().width;
         const headerComputedStyle = DomDocumentHelper.getComputedStyle(headerEl);
+        if (!headerComputedStyle) return;
         const paddingLeft = (parseFloat(headerComputedStyle.paddingLeft) || 0);
         const paddingRight = (parseFloat(headerComputedStyle.paddingRight) || 0);
         const columnGap = (parseFloat(headerComputedStyle.columnGap) || 0);
-        this.width = elWidth - paddingLeft - paddingRight - 2 * columnGap;
+        const newWidth = elWidth - paddingLeft - paddingRight - 2 * columnGap;
+        this.isResponsivenessProcessed = this.width !== newWidth;
+        this.width = newWidth;
       }
     }
+  }
+
+  public createLayoutElements(): Array<ISurveyLayoutElement> {
+    const layoutElement: ISurveyLayoutElement = {
+      id: "advanced-header",
+      container: "header",
+      component: "sv-header",
+      index: -100,
+      data: this,
+      processResponsiveness: () => this.processResponsiveness(),
+      isInContainer: (container: LayoutElementContainer) => this.isAdvancedHeaderInContainer(layoutElement, container)
+    };
+    return [layoutElement];
+  }
+
+  private isAdvancedHeaderInContainer(layoutElement: ISurveyLayoutElement, container: LayoutElementContainer): boolean {
+    const canShowHeader = this.survey.state === "running" || this.survey.state === "starting" || (this.survey.showHeaderOnCompletePage === true && this.survey.state === "completed");
+    if (!canShowHeader) return false;
+    if (this.survey.showTOC && !this.hasBackground) {
+      return container === "contentTop";
+    }
+    return layoutElement.container === container;
   }
 
   get hasBackground(): boolean {

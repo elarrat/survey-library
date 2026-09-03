@@ -69,8 +69,12 @@ export var japaneseSurveyStrings = {
   stepError: "{0}のステップサイズに一致する値を入力してください。",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "値は {0} 以下である必要があります",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "無効な入力",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "数字は使用できません。",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "必要なフォーマットに合うように値を記入してください。",
   // "Please enter at least {0} character(s)."
   textMinLength: "少なくとも {0} 文字を入力してください。",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var japaneseSurveyStrings = {
   urlGetChoicesError: "リクエストが空のデータを返したか、'path' プロパティが正しくありません。",
   // "The file size should not exceed {0}."
   exceedMaxSize: "ファイルのサイズは{0}を超えてはいけません",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "バイト数、KB、MB、GB、TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "アップロードできるファイルの最大数は{0}です。",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "ファイルはアップロードできません。「onUploadFiles」イベントのハンドラーを追加してください。",
   // "Response required: enter another value."
@@ -127,7 +135,7 @@ export var japaneseSurveyStrings = {
   noRowsText: "行がありません。",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "行 {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "新規追加",
@@ -153,8 +161,6 @@ export var japaneseSurveyStrings = {
   savingDataError: "エラーが発生し、結果を保存できませんでした。",
   // "The results were saved successfully!"
   savingDataSuccess: "結果が正常に保存されました",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "回答が64KBを超えています。ファイルのサイズを小さくして、もう一度やり直すか、アンケートの所有者にお問い合わせください。",
   // "Try again"
   saveAgainButton: "もう一度試してみてください。",
   // "min"
@@ -238,7 +244,9 @@ export var japaneseSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "目次",
   // [Auto-translated] "Progress bar"
-  progressbar: "進行状況バー"
+  progressbar: "進行状況バー",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "ページ{0}"
 };
 
 setupLocale({ localeCode: "ja", strings: japaneseSurveyStrings, nativeName: "日本語", englishName: "Japanese" });

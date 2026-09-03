@@ -11,7 +11,7 @@ export var norwegianSurveyStrings = {
   previewText: "Forhåndsvisning",
   // "Edit"
   editText: "Redigere",
-  // "Start"
+  // [Auto-translated] "Start"
   startSurveyText: "Start",
   // [Auto-translated] "Please leave a comment"
   commentText: "Legg igjen en kommentar",
@@ -47,10 +47,10 @@ export var norwegianSurveyStrings = {
   loadingSurvey: "Undersøkelsen laster...",
   // "Select..."
   placeholder: "Velg...",
-  // [Auto-translated] "Select..."
-  ratingOptionsCaption: "Velge...",
-  // [Auto-translated] "Select..."
-  buttongroupOptionsCaption: "Velge...",
+  // "Select..."
+  ratingOptionsCaption: "Velg...",
+  // "Select..."
+  buttongroupOptionsCaption: "Velg...",
   // "value"
   value: "verdi",
   // "Response required."
@@ -69,8 +69,12 @@ export var norwegianSurveyStrings = {
   stepError: "Angi en verdi som samsvarer med trinnstørrelsen på {0}.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "Verdien bør ikke være større enn {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Ugyldig input",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Tall er ikke tillatt.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Vennligst fyll ut verdien for å matche det nødvendige formatet.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Vennligst skriv inn minst {0} tegn.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var norwegianSurveyStrings = {
   urlGetChoicesError: "Forespørselen returnerte tomme data, eller 'sti' -egenskapen er feil",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Filstørrelsen bør ikke overstige {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bytes, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "Maksimalt antall filer du kan laste opp er {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var norwegianSurveyStrings = {
   noRowsText: "Det er ingen rader.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Rad {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Legg til ny",
@@ -155,12 +161,10 @@ export var norwegianSurveyStrings = {
   savingDataError: "Det oppsto en feil, og vi kunne ikke lagre resultatene.",
   // "The results were saved successfully!"
   savingDataSuccess: "Resultatene ble lagret!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Svaret ditt overstiger 64 kB. Reduser størrelsen på filen(e) og prøv på nytt eller kontakt eieren av undersøkelsen.",
   // "Try again"
   saveAgainButton: "Prøv igjen",
-  // "min"
-  timerMin: "min",
+  // [Auto-translated] "min"
+  timerMin: "Min",
   // "sec"
   timerSec: "sek",
   // "You have spent {0} on this page and {1} in total."
@@ -176,11 +180,11 @@ export var norwegianSurveyStrings = {
   // "You have spent {0} of {1} in total."
   timerLimitSurvey: "Du har tilbrakt {0} av {1} totalt.",
   // "Clear"
-  clearCaption: "Klar",
-  // [Auto-translated] "Select"
-  selectCaption: "Velge",
-  // [Auto-translated] "Sign here"
-  signaturePlaceHolder: "Logg inn her",
+  clearCaption: "Tøm",
+  // "Select"
+  selectCaption: "Velg",
+  // "Sign here"
+  signaturePlaceHolder: "Signer her",
   // [Auto-translated] "No signature"
   signaturePlaceHolderReadOnly: "Ingen signatur",
   // "Select File"
@@ -205,10 +209,10 @@ export var norwegianSurveyStrings = {
   confirmRemoveAllFiles: "Er du sikker på at du vil fjerne alle filene?",
   // "Question Title"
   questionTitlePatternText: "Spørsmålstittel",
-  // [Auto-translated] "Cancel"
-  modalCancelButtonText: "Annullere",
-  // [Auto-translated] "Apply"
-  modalApplyButtonText: "Bruke",
+  // "Cancel"
+  modalCancelButtonText: "Avbryt",
+  // "Apply"
+  modalApplyButtonText: "Bruk",
   // [Auto-translated] "Type to search..."
   filterStringPlaceholder: "Skriv for å søke ...",
   // [Auto-translated] "No data to display"
@@ -233,14 +237,34 @@ export var norwegianSurveyStrings = {
   selectToRankEmptyUnrankedAreaText: "Dra valg hit for å rangere dem",
   // [Auto-translated] "OK"
   ok: "OK",
-  // [Auto-translated] "Cancel"
-  cancel: "Annullere",
+  // "Cancel"
+  cancel: "Avbryt",
   // "Create \"{0}\" item..."
   createCustomItem: "Lag \"{0}\" element...",
   // [Auto-translated] "Table of contents"
   toc: "Innhold",
   // [Auto-translated] "Progress bar"
-  progressbar: "Fremdriftsindikator"
+  progressbar: "Fremdriftsindikator",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Side {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "d",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "m",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "å",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "t",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "T",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "M",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "f",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "F"
 };
 
 setupLocale({ localeCode: "no", strings: norwegianSurveyStrings, nativeName: "norsk", englishName: "Norwegian" });

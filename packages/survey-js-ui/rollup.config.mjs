@@ -18,26 +18,26 @@ const aliases = {
 };
 
 const buildPlatformJson = {
-  name: pkg.name,
-  version: pkg.version,
-  license: "MIT",
-  author: "DevSoft Baltic OU <info@devsoftbaltic.com>",
-  homepage: "https://surveyjs.io/",
-  description: "A free MIT-licensed UI component that renders dynamic, interactive JSON-based forms and surveys in apps built with HTML, CSS, and JavaScript. You can use it to collect responses from users and send them to your own database.",
-  keywords: [
+  "name": pkg.name,
+  "version": pkg.version,
+  "license": "MIT",
+  "homepage": "https://surveyjs.io/",
+  "author": "DevSoft Baltic OU <info@devsoftbaltic.com>",
+  "description": "UI component that renders dynamic, JSON-based forms and surveys in HTML/CSS/JavaScript apps, with jQuery support. You can use it to collect responses from users and send them to your own database.",
+  "keywords": [
     "vanilla",
     "vanilla-js",
+    "jquery",
+    "html",
     "survey",
     "form",
     "surveyjs",
     "survey-library",
-    "form-component",
     "form-rendering",
     "survey-renderer",
     "dynamic-form",
     "interactive-form",
     "form-library",
-    "form-management",
     "questionnaire",
     "data-collection",
     "data-validation",
@@ -46,36 +46,43 @@ const buildPlatformJson = {
     "ui-component",
     "json",
     "json-schema",
-    "schema-form",
-    "survey-renderer",
-    "client-side",
-    "frontend",
     "javascript",
     "typescript",
+    "schema-form",
+    "conditional-logic",
+    "quiz",
+    "poll",
+    "localization",
+    "css",
+    "shadcn",
+    "mui",
+    "material-ui",
+    "bootstrap",
+    "bootswatch"
   ],
-  files: [
-    "**/*",
+  "files": [
+    "**/*"
   ],
-  repository: {
-    type: "git",
-    url: "https://github.com/surveyjs/surveyjs.git",
-  },
-  main: "survey-js-ui.js",
-  module: "fesm/survey-js-ui.mjs",
-  typings: "./typings/entries/index.d.ts",
-  exports: {
+  "main": "survey-js-ui.js",
+  "module": "fesm/survey-js-ui.mjs",
+  "typings": "./typings/survey-js-ui/entries/index.d.ts",
+  "exports": {
     ".": {
-      types: "./typings/entries/index.d.ts",
-      import: "./fesm/survey-js-ui.mjs",
-      require: "./survey-js-ui.js",
-    },
+      "types": "./typings/survey-js-ui/entries/index.d.ts",
+      "import": "./fesm/survey-js-ui.mjs",
+      "require": "./survey-js-ui.js"
+    }
   },
-  dependencies: {},
-  peerDependencies: {
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/surveyjs/surveyjs.git"
+  },
+  "dependencies": {},
+  "peerDependencies": {
     "survey-core": pkg.version,
     "@types/react-dom": "*",
-    "@types/react": "*",
-  },
+    "@types/react": "*"
+  }
 };
 
 if (process.env.emitNonSourceFiles === "true") {
@@ -111,6 +118,7 @@ export default (options = {}) => {
       },
       dir: resolve(buildPath, "./fesm"),
       version: pkg.version,
+      noEmitOnError: !options.watch,
     }),
     createUmdConfig({
       input: {
@@ -132,6 +140,7 @@ export default (options = {}) => {
         "jquery": "jQuery",
       },
       version: pkg.version,
+      noEmitOnError: !options.watch,
     })
   ];
 };

@@ -11,6 +11,7 @@ export interface MarkupTestDescriptor {
   excludePlatform?: string;
   etalon?: string;
   removeIds?: boolean;
+  removeValues?: boolean;
   initSurvey?: (survey: Model) => void;
   initSurveyAfterIdSetup?: (survey: Model) => void;
   getElement?: (element?: HTMLElement) => HTMLElement | undefined | null;
@@ -87,7 +88,21 @@ function sortAttributes(elements: Array<HTMLElement>) {
   }
 }
 
+// Emulates the shipped survey-core.css: with the probe variable resolvable the
+// runtime skips its CSSOM fallback delivery of the base theme variables, which
+// would otherwise land on the root element's style attribute and pollute the
+// snapshots (see ensureBaseThemeStyles in survey-core).
+function ensureBaseThemeProbeStylesheet(): void {
+  const id = "markup-base-theme-variables";
+  if (typeof document === "undefined" || document.getElementById(id)) return;
+  const style = document.createElement("style");
+  style.id = id;
+  style.textContent = ":where(.sd-theme-root) { --sjs2-base-unit-size: 8px; }";
+  document.head.appendChild(style);
+}
+
 export function testQuestionMarkup(assert: any, test: MarkupTestDescriptor, platform: any): void {
+  ensureBaseThemeProbeStylesheet();
   var id = "surveyElement" + platform.name;
   var surveyElement = document.getElementById(id);
   var reportElement = document.getElementById(id + "_report");
@@ -148,6 +163,10 @@ export function testQuestionMarkup(assert: any, test: MarkupTestDescriptor, plat
         oldStr = sortInlineStyles(oldStr);
         newstr = removeInputValueAttributeForSlider(newstr);
         oldStr = removeInputValueAttributeForSlider(oldStr);
+        if (test.removeValues) {
+          newstr = removeValueAttributes(newstr);
+          oldStr = removeValueAttributes(oldStr);
+        }
         newstr = removeActionsIdAttribute(newstr);
         oldStr = removeActionsIdAttribute(oldStr);
 
@@ -269,9 +288,9 @@ export function testQuestionMarkup(assert: any, test: MarkupTestDescriptor, plat
   platform.render(platform.survey, surveyElement);
 }
 
-const removeExtraElementsConditions: Array<(htmlElement: HTMLElement) => boolean> = [
-  (htmlElement: HTMLElement) => htmlElement.classList.contains("sv-vue-title-additional-div"),
-  (HTMLElement: HTMLElement) => HTMLElement.tagName.toLowerCase().search(/^sv-/) > -1
+const removeExtraElementsConditions: Array<(e: HTMLElement) => boolean> = [
+  (e: HTMLElement) => e.classList.contains("sv-vue-title-additional-div"),
+  (e: HTMLElement) => e.tagName.toLowerCase().search(/^sv-/) > -1,
 ];
 
 function clearExtraElements(innerHTML: string): string {
@@ -420,10 +439,19 @@ function sortInlineStyles(str: string) {
 function removeInputValueAttributeForSlider(str: string) {
   const div = document.createElement("div");
   div.innerHTML = str;
-  div.querySelectorAll("*").forEach(el => {
-    if (el.tagName.toLowerCase() === "input") {
+  div.querySelectorAll("*").forEach((el) => {
+    if (el.tagName.toLowerCase() === "input" && !!(el as HTMLInputElement).type && (el as HTMLInputElement).type === "range") {
       el.removeAttribute("value");
     }
+  });
+  return div.innerHTML;
+}
+
+function removeValueAttributes(str: string) {
+  const div = document.createElement("div");
+  div.innerHTML = str;
+  div.querySelectorAll("[value]").forEach((el) => {
+    el.removeAttribute("value");
   });
   return div.innerHTML;
 }
@@ -432,7 +460,7 @@ function removeActionsIdAttribute(str: string) {
   const div = document.createElement("div");
   div.innerHTML = str;
   div.querySelectorAll("*").forEach(el => {
-    if (el.classList.contains("sv-action")) {
+    if (el.classList.contains("sd-action-bar__item")) {
       el.removeAttribute("id");
     }
   });

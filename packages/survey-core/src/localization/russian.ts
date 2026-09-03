@@ -69,8 +69,12 @@ export var russianSurveyStrings = {
   stepError: "Пожалуйста, введите значение, которое соответствует размеру шага {0}.",
   // "The value should not be greater than {0}"
   maxError: "Значение не должно превышать {0}.",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Некорректный вход",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Номера не допускаются.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Пожалуйста, заполните значение, чтобы соответствовать необходимому формату.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Пожалуйста введите больше {0} символов.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var russianSurveyStrings = {
   urlGetChoicesError: "Ответ на запрос пришел пустой или свойство 'path' указано неверно",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Размер файла не должен превышать {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Байты, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "Максимальное количество файлов, которые вы можете загрузить, — {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var russianSurveyStrings = {
   noRowsText: "Рядов нет.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Строка {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Добавить новую",
@@ -155,8 +161,6 @@ export var russianSurveyStrings = {
   savingDataError: "Произошла ошибка, результат не был сохранён.",
   // "The results were saved successfully!"
   savingDataSuccess: "Результат успешно сохранён!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Ваш ответ превышает 64 КБ. Уменьшите размер файла (файлов) и повторите попытку или обратитесь к владельцу опроса.",
   // "Try again"
   saveAgainButton: "Попробовать снова",
   // "min"
@@ -240,7 +244,27 @@ export var russianSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Содержание",
   // [Auto-translated] "Progress bar"
-  progressbar: "Индикатор выполнения"
+  progressbar: "Индикатор выполнения",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Страница {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "д",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "м",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "г",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "ч",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "Ч",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "М",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "с",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "п",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "П"
 };
 
 setupLocale({ localeCode: "ru", strings: russianSurveyStrings, nativeName: "русский", englishName: "Russian" });

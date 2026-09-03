@@ -69,8 +69,12 @@ export var icelandicSurveyStrings = {
   stepError: "Vinsamlegast sláðu inn gildi sem passar við þrepastærð {0}.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "Gildið má ekki vera hærra en {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Ógild inntak",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Tölur eru ekki leyfðar.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Vinsamlegast fylltu út gildið til að passa við nauðsynlegt snið.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Það ætti að vera minnst {0} tákn.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var icelandicSurveyStrings = {
   urlGetChoicesError: "Beiðninng skilaði engum gögnum eða slóðinn var röng",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Skráinn skal ekki vera stærri en {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bæti, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "Hámarksfjöldi skráa sem þú getur hlaðið upp er {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var icelandicSurveyStrings = {
   noRowsText: "Það eru engar raðir.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Röð {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Bæta við nýju",
@@ -155,8 +161,6 @@ export var icelandicSurveyStrings = {
   savingDataError: "Villa kom upp og við gátum ekki vistað niðurstöðurnar.",
   // "The results were saved successfully!"
   savingDataSuccess: "Árangurinn var vistaður með góðum árangri!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Svar þitt fer yfir 64KB. Vinsamlegast minnkaðu stærð skráa þinna og reyndu aftur eða hafðu samband við eiganda könnunarinnar.",
   // "Try again"
   saveAgainButton: "Reyndu aftur",
   // "min"
@@ -240,7 +244,9 @@ export var icelandicSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Efnisyfirlit",
   // [Auto-translated] "Progress bar"
-  progressbar: "Framvindustika"
+  progressbar: "Framvindustika",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Síða {0}"
 };
 
 setupLocale({ localeCode: "is", strings: icelandicSurveyStrings, nativeName: "íslenska", englishName: "Icelandic" });

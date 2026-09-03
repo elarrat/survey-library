@@ -26,6 +26,7 @@ export interface IMatrixColumnOwner extends ILocalizableOwner {
   ): void;
   onShowInMultipleColumnsChanged(column: MatrixDropdownColumn): void;
   onColumnVisibilityChanged(column: MatrixDropdownColumn): void;
+  onColumnCellVisibilityChanged(column: MatrixDropdownColumn): void;
   getCellType(): string;
   getCustomCellType(column: MatrixDropdownColumn, row: MatrixDropdownRowModelBase, cellType: string): string;
   onColumnCellTypeChanged(column: MatrixDropdownColumn): void;
@@ -134,6 +135,7 @@ export class MatrixDropdownColumn extends Base
     return res;
   }
   private templateQuestionValue: Question;
+  private templateQuestionJsonValue: any;
   private colOwnerValue: IMatrixColumnOwner;
   private indexValue = -1;
   private _hasVisibleCell = true;
@@ -297,6 +299,10 @@ export class MatrixDropdownColumn extends Base
   public set hasVisibleCell(newVal: boolean) {
     this._hasVisibleCell = newVal;
   }
+  public onCellVisibilityChanged(isVisible: boolean): void {
+    if (!this.colOwner || this.hasVisibleCell === isVisible) return;
+    this.colOwner.onColumnCellVisibilityChanged(this);
+  }
   public isColumnsVisibleIf: boolean = true;
   public getVisibleMultipleChoices(): Array<ItemValue> {
     const choices = this.templateQuestion.visibleChoices;
@@ -359,6 +365,7 @@ export class MatrixDropdownColumn extends Base
    * Default value: `""`
    *
    * [Dynamic Texts](https://surveyjs.io/form-library/documentation/design-survey/conditional-logic#dynamic-texts (linkStyle))
+   * @since 2.0.0
    */
   public get defaultDisplayValue(): string {
     return this.templateQuestion.defaultDisplayValue;
@@ -677,7 +684,7 @@ export class MatrixDropdownColumn extends Base
     data: any,
     onUpdateJson: (json: any) => any = null
   ) {
-    this.setQuestionProperties(cellQuestion, onUpdateJson);
+    this.setQuestionProperties(cellQuestion, onUpdateJson, !onUpdateJson);
   }
   private callOnCellQuestionUpdate(cellQuestion: Question, data: any) {
     var qType = cellQuestion.getType();
@@ -716,6 +723,7 @@ export class MatrixDropdownColumn extends Base
     if (this.templateQuestion) {
       this.removeProperties(prevCellType);
     }
+    this.templateQuestionJsonValue = undefined;
     this.templateQuestionValue = this.createNewQuestion(curCellType);
     this.templateQuestion.locOwner = this;
     this.addProperties(curCellType);
@@ -731,6 +739,7 @@ export class MatrixDropdownColumn extends Base
       this.templateQuestion.locTitle.serializeCallBackText = true;
     }
     this.templateQuestion.onPropertyChanged.add((sender, options) => {
+      this.templateQuestionJsonValue = undefined;
       this.propertyValueChanged(
         options.name,
         options.oldValue,
@@ -740,11 +749,13 @@ export class MatrixDropdownColumn extends Base
       );
     });
     this.templateQuestion.onNestedPropertyChanged.add((sender, options) => {
+      this.templateQuestionJsonValue = undefined;
       if (this.colOwner && !this.isLoadingFromJson) {
         this.colOwner.onColumnNestedPropertyChanged(this, options.name, options.nestedName, options.newValue);
       }
     });
     this.templateQuestion.onItemValuePropertyChanged.add((sender, options) => {
+      this.templateQuestionJsonValue = undefined;
       this.doItemValuePropertyChanged(
         options.propertyName,
         options.obj,
@@ -781,18 +792,28 @@ export class MatrixDropdownColumn extends Base
   private previousChoicesId: string = undefined;
   protected setQuestionProperties(
     question: Question,
-    onUpdateJson: (json: any) => any = null
+    onUpdateJson: (json: any) => any = null,
+    useCache: boolean = false
   ): void {
     if (this.templateQuestion) {
-      var json = new JsonObject().toJsonObject(this.templateQuestion, true);
+      var json: any;
       if (onUpdateJson) {
+        json = new JsonObject().toJsonObject(this.templateQuestion, true);
         onUpdateJson(json);
+      } else if (useCache) {
+        if (!this.templateQuestionJsonValue) {
+          this.templateQuestionJsonValue = JSON.stringify(new JsonObject().toJsonObject(this.templateQuestion, true));
+        }
+        json = JSON.parse(this.templateQuestionJsonValue);
+      } else {
+        const storeDefaults = this.templateQuestion.getType() === question.getType();
+        json = new JsonObject().toJsonObject(this.templateQuestion, storeDefaults);
       }
       json.type = question.getType();
       if (this.cellType === "default" && !!this.colOwner && this.colOwner.hasChoices()) {
         delete json["choices"];
       }
-      delete json["itemComponent"];
+      this.updateItemComponentInJson(json, question);
 
       if (this.jsonObj && json.type === "rating" && this.isLoadingFromJson) {
         Object.keys(this.jsonObj).forEach((prop) => {
@@ -810,6 +831,15 @@ export class MatrixDropdownColumn extends Base
         this.templateQuestion.choices = choices;
         this.propertyValueChanged("choices", choices, choices);
       };
+    }
+  }
+  private updateItemComponentInJson(json: any, question: Question): void {
+    const propName = "itemComponent";
+    if (json[propName] === undefined) return;
+    const prop = this.templateQuestion.getPropertyByName(propName);
+    if (!prop || prop.isDefaultValueByObj(this.templateQuestion, json[propName]) ||
+      !question.getPropertyByName(propName)) {
+      delete json[propName];
     }
   }
   private doItemValuePropertyChanged(

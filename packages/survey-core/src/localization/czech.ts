@@ -69,8 +69,12 @@ export var czechSurveyStrings = {
   stepError: "Zadejte hodnotu, která odpovídá velikosti kroku {0}.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "Hodnota by neměla být větší než {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Neplatný vstup",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Čísla nejsou povolena.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Prosím, vyplňte hodnotu tak, aby odpovídala požadovanému formátu.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Zadejte prosím alespoň {0} znaků.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var czechSurveyStrings = {
   urlGetChoicesError: "Požadavek nevrátil data nebo je neplatná vlastnost 'path'",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Velikost souboru by neměla být větší než {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bajty, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "Maximální počet souborů, které můžete nahrát, je {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var czechSurveyStrings = {
   noRowsText: "Neexistují žádné řádky.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Řádek {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Přidat nový",
@@ -155,11 +161,9 @@ export var czechSurveyStrings = {
   savingDataError: "Došlo k chybě a výsledky jsme nemohli uložit.",
   // "The results were saved successfully!"
   savingDataSuccess: "Výsledky byly úspěšně uloženy!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Vaše odpověď přesahuje 64 kB. Zmenšete prosím velikost svých souborů a zkuste to znovu nebo kontaktujte vlastníka průzkumu.",
   // "Try again"
   saveAgainButton: "Zkuste to znovu",
-  // "min"
+  // [Auto-translated] "min"
   timerMin: "min",
   // "sec"
   timerSec: "sek",
@@ -240,7 +244,27 @@ export var czechSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Obsah",
   // [Auto-translated] "Progress bar"
-  progressbar: "Indikátor průběhu"
+  progressbar: "Indikátor průběhu",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Stránka {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "d",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "m",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "r",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "h",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "H",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "M",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "t",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "T"
 };
 
 setupLocale({ localeCode: "cs", strings: czechSurveyStrings, nativeName: "čeština", englishName: "Czech" });

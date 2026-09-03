@@ -2,7 +2,7 @@ import { Base } from "../base";
 import { ISurvey, ISurveyImpl } from "../base-interfaces";
 import { Serializer } from "../jsonobject";
 import { property } from "../decorators";
-import { IInputMask, IMaskedInputResult, ITextInputParams } from "./mask_utils";
+import { IInputMask, IMaskedInputResult, IMaskLocaleChange, ITextInputParams } from "./mask_utils";
 
 /**
  * A base class for classes that implement input masks:
@@ -21,6 +21,14 @@ export class InputMaskBase extends Base implements IInputMask {
   @property() saveMaskedValue: boolean;
 
   public owner: ISurveyImpl;
+
+  // Indicates that the displayed masked value depends on the survey locale.
+  public get isLocaleDependent(): boolean { return false; }
+  // Rebuilds the locale dependent state of the mask. A locale dependent mask updates the passed
+  // state with the text to display and the value to store.
+  public localeChanged(state?: IMaskLocaleChange): void {
+    super.localeChanged();
+  }
 
   public getSurvey(live: boolean = false): ISurvey {
     return this.owner?.getSurvey();
@@ -56,6 +64,13 @@ export class InputMaskBase extends Base implements IInputMask {
 
   public getUnmaskedValue(src: string): any { return src; }
   public getMaskedValue(src: any): string { return src; }
+  // Returns the string to display in the input for a stored model value.
+  // When saveMaskedValue is enabled the stored value is already masked, so it is returned as is.
+  // An empty value has no masked text of its own: both save modes display the empty mask.
+  public getMaskedValueBySaveMode(src: any): string {
+    const isEmpty = src === undefined || src === null || src === "";
+    return this.saveMaskedValue && !isEmpty ? src : this.getMaskedValue(src);
+  }
   public getTextAlignment(): "left" | "right" | "auto" { return "auto"; }
 
   public getTypeForExpressions(): string {

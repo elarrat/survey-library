@@ -36,7 +36,9 @@ export var englishStrings = {
   minError: "The value should not be less than {0}",
   stepError: "Please enter a value that matches the step size of {0}.",
   maxError: "The value should not be greater than {0}",
+  invalidInputError: "Invalid input",
   textNoDigitsAllow: "Numbers are not allowed.",
+  incompletePatternError: "Please complete the value to match the required format.",
   textMinLength: "Please enter at least {0} character(s).",
   textMaxLength: "Please enter no more than {0} character(s).",
   textMinMaxLength: "Please enter at least {0} and no more than {1} characters.",
@@ -51,6 +53,7 @@ export var englishStrings = {
   urlRequestError: "The request returned error '{0}'. {1}",
   urlGetChoicesError: "The request returned empty data or the 'path' property is incorrect",
   exceedMaxSize: "The file size should not exceed {0}.",
+  fileSizeUnits: "Bytes, KB, MB, GB, TB",
   exceedMaxFiles: "The maximum number of files you can upload is {0}.",
   noUploadFilesHandler: "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event.",
   otherRequiredError: "Response required: enter another value.",
@@ -79,7 +82,6 @@ export var englishStrings = {
   savingData: "The results are being saved on the server...",
   savingDataError: "An error occurred and we could not save the results.",
   savingDataSuccess: "The results were saved successfully!",
-  savingExceedSize: "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner.",
   saveAgainButton: "Try again",
   timerMin: "min",
   timerSec: "sec",
@@ -121,7 +123,17 @@ export var englishStrings = {
   cancel: "Cancel",
   createCustomItem: "Create \"{0}\" item...",
   toc: "Table of contents",
-  progressbar: "Progress bar"
+  progressbar: "Progress bar",
+  progressbarPage: "Page {0}",
+  maskPlaceholderDay: "d", // [Do not translate]
+  maskPlaceholderMonth: "m", // [Do not translate]
+  maskPlaceholderYear: "y", // [Do not translate]
+  maskPlaceholderHour12: "h", // [Do not translate]
+  maskPlaceholderHour24: "H", // [Do not translate]
+  maskPlaceholderMinute: "M", // [Do not translate]
+  maskPlaceholderSecond: "s", // [Do not translate]
+  maskPlaceholderTimeMarkerLower: "t", // [Do not translate]
+  maskPlaceholderTimeMarkerUpper: "T" // [Do not translate]
 };
 
 /*

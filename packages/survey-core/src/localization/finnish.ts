@@ -69,8 +69,12 @@ export var finnishSurveyStrings = {
   stepError: "Syötä arvo, joka vastaa {0} askelkokoa.",
   // "The value should not be greater than {0}"
   maxError: "Arvo ei saa olla suurempi kuin {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Virheellinen syöte",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Numerot eivät ole sallittuja.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Täytäthän arvon vastaamaan vaadittua muotoa.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Syötä vähintään {0} merkkiä.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var finnishSurveyStrings = {
   urlGetChoicesError: "Pyyntö palautti tyhjän tiedoston tai 'path'-asetus on väärä",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Tiedoston koko ei saa olla suurempi kuin {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Tavut, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "Tiedostojen enimmäismäärä, jonka voit ladata, on {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var finnishSurveyStrings = {
   noRowsText: "Ei rivejä",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Rivi {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Lisää uusi",
@@ -155,11 +161,9 @@ export var finnishSurveyStrings = {
   savingDataError: "Tapahtui virhe, emmekä voineet tallentaa kyselyn tietoja.",
   // "The results were saved successfully!"
   savingDataSuccess: "Tiedot tallennettiin onnistuneesti!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Vastauksesi ylittää 64 kt. Pienennä tiedostojesi kokoa ja yritä uudelleen tai ota yhteyttä kyselyn omistajaan.",
   // "Try again"
   saveAgainButton: "Yritä uudelleen",
-  // "min"
+  // [Auto-translated] "min"
   timerMin: "min",
   // "sec"
   timerSec: "sek",
@@ -240,7 +244,27 @@ export var finnishSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Sisällysluettelo",
   // [Auto-translated] "Progress bar"
-  progressbar: "Edistymispalkki"
+  progressbar: "Edistymispalkki",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Sivu {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "p",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "k",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "v",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "t",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "T",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "m",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "i",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "I"
 };
 
 setupLocale({ localeCode: "fi", strings: finnishSurveyStrings, nativeName: "suomi", englishName: "Finnish" });

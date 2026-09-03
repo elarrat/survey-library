@@ -1,6 +1,6 @@
 import { JsonObjectProperty, Serializer } from "./jsonobject";
 import { property } from "./decorators";
-import { Base } from "./base";
+import { ArrayChanges, Base } from "./base";
 import { EventBase } from "./event";
 import { IAction } from "./actions/action";
 import { AdaptiveActionContainer } from "./actions/adaptive-container";
@@ -24,10 +24,10 @@ import { SurveyError } from "./survey-error";
 import { Helpers } from "./helpers";
 import { settings } from "./settings";
 import { ILocalizableOwner, LocalizableString } from "./localizablestring";
-import { ActionContainer, defaultActionBarCss } from "./actions/container";
+import { ActionContainer } from "./actions/container";
 import { CssClassBuilder } from "./utils/cssClassBuilder";
 import { SurveyModel } from "./survey";
-import { IAnimationConsumer, AnimationBoolean, AnimationProperty } from "./utils/animation";
+import { IAnimationConsumer, AnimationBoolean } from "./utils/animation";
 import { classesToSelector } from "./utils/dom-utils";
 import { cleanHtmlElementAfterAnimation, prepareElementForVerticalAnimation } from "./utils/animation-dom";
 import { DomDocumentHelper, DomWindowHelper } from "./global_variables_utils";
@@ -89,20 +89,33 @@ export abstract class SurveyElementCore extends Base implements ILocalizableOwne
       const property: JsonObjectProperty = Serializer.findProperty(this.getType(), "description");
       showPlaceholder = !!(property?.placeholder);
     }
-    return !!newDescription || (showPlaceholder && this.isDesignMode);
+    let res = !!newDescription || (showPlaceholder && this.isDesignMode);
+    if (this.isDesignMode) {
+      const survey = this.getSurvey();
+      if (!!survey && !!survey.beforeShowInplaceDescriptionEditorCallback) {
+        res = survey.beforeShowInplaceDescriptionEditorCallback(this, res);
+      }
+    }
+    return res;
   }
   protected resetDescriptionVisibility(): void {
     this.resetPropertyValue("hasDescription");
+  }
+  private updateDescriptionVisibility(): void {
+    if (this.getPropertyValueWithoutDefault("hasDescription") === undefined) return;
+    this.setPropertyValue("hasDescription", this.calcDescriptionVisibility());
+  }
+  protected propertyValueChanged(name: string, oldValue: any, newValue: any, arrayChanges?: ArrayChanges, target?: Base): void {
+    super.propertyValueChanged(name, oldValue, newValue, arrayChanges, target);
+    if (name === "description" || (name === "title" && this.isDesignMode)) {
+      this.updateDescriptionVisibility();
+    }
   }
   /**
    * Explanatory text displayed under the title.
    * @see hasDescription
    */
-  @property({
-    localizable: { markdown: true }, onSet: (newDescription, self) => {
-      self.resetDescriptionVisibility();
-    }
-  }) description: string;
+  @property({ localizable: { markdown: true } }) description: string;
   get locDescription(): LocalizableString {
     return this.getLocalizableString("description");
   }
@@ -250,7 +263,7 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
     }
     return null;
   }
-  public static FocusElement(elementId: string, isTimeOut?: boolean, containerEl?: HTMLElement): boolean {
+  public static FocusElement(elementId: string | (() => HTMLElement), isTimeOut?: boolean, containerEl?: HTMLElement): boolean {
     if (!elementId || !DomDocumentHelper.isAvailable()) return false;
     const res: boolean = !isTimeOut ? SurveyElement.focusElementCore(elementId, containerEl) : false;
     if (!res) {
@@ -260,14 +273,20 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
     }
     return res;
   }
-  private static focusElementCore(elementId: string, containerEl?: HTMLElement): boolean {
+  private static focusElementCore(element: string | (() => HTMLElement), containerEl?: HTMLElement): boolean {
     const { root } = settings.environment;
     if (!root && !containerEl) return false;
-    const el: HTMLElement = containerEl ? containerEl.querySelector(`#${CSS.escape(elementId)}`) : root.getElementById(elementId);
+
+    let el: HTMLElement;
+    if (typeof element == "string") {
+      el = containerEl ? containerEl.querySelector(`#${CSS.escape(element)}`) : root.getElementById(element);
+    } else {
+      el = element();
+    }
     // https://stackoverflow.com/questions/19669786/check-if-element-is-visible-in-dom
     if (el && !(<any>el)["disabled"] && el.style.display !== "none" && el.offsetParent !== null) {
       SurveyElement.ScrollElementToViewCore(el, true, false);
-      el.focus();
+      el.focus({ focusVisible: false } as any);
       return true;
     }
     return false;
@@ -372,9 +391,6 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
     this.renderedIsExpanded = !this.isCollapsed;
   }
   protected notifyStateChanged(prevState: string): void {
-    if (this.survey) {
-      this.lifecycleCallbacks.elementContentVisibilityChanged(this);
-    }
   }
   /**
    * Returns `true` if the survey element is collapsed.
@@ -476,6 +492,7 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
   public getTitleToolbar(): AdaptiveActionContainer {
     if (!this.titleToolbarValue) {
       this.titleToolbarValue = <AdaptiveActionContainer>this.createActionContainer(true);
+      this.titleToolbarValue.setActionsAppearance({ style: "neutral", size: "small", mode: "secondary" });
       this.titleToolbarValue.locOwner = this;
       this.titleToolbarValue.containerCss = (this.isPanel ? this.cssClasses.panel.titleBar : this.cssClasses.titleBar) || "sv-action-title-bar";
       this.titleToolbarValue.setItems(this.getTitleActions());
@@ -560,6 +577,17 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
   public getValueGetterContext(): IValueGetterContext {
     const data = <IObjectValueContext><any>this.data;
     return !!data ? data.getValueGetterContext() : super.getValueGetterContext();
+  }
+  protected canSkipExpressionByKeys(runner: any, keys: any, vars?: string[]): boolean {
+    if (!keys) return false;
+    const data = <IObjectValueContext><any>this.data;
+    if (!!data && typeof data.getValueGetterContext === "function") {
+      const dataContext = data.getValueGetterContext();
+      if (typeof dataContext?.getContextKeys === "function") {
+        return super.canSkipExpressionByKeys(runner, Object.assign({}, keys, dataContext.getContextKeys(keys)), vars);
+      }
+    }
+    return super.canSkipExpressionByKeys(runner, keys, vars);
   }
   protected createTextProcessor(): ITextProcessor {
     return this.surveyImplValue.getTextProcessor();
@@ -696,7 +724,7 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
    * [View Demo](https://surveyjs.io/form-library/examples/customize-survey-with-css/ (linkStyle))
    */
   public get cssClasses(): any {
-    if (!this.survey) return this.calcCssClasses(this.css);
+    if (!this.survey || this.isDisposed) return this.calcCssClasses(this.css);
     return this.cssClassesValue;
   }
   public get cssTitleNumber(): any {
@@ -708,8 +736,16 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
     const css = this.cssClasses;
     return css.requiredMark || (css.panel && css.panel.requiredMark);
   }
+  public get showTitleExpandableSvg(): boolean {
+    return this.state !== "default" && !this.isSingleInputMode;
+  }
+  public get titleExpandableSvgIconName(): string {
+    return this.isExpanded ? "icon-collapse-16x16" : "icon-expand-16x16";
+  }
+  public getCssTitleExpandableSvgContainer(): string {
+    return this.cssClasses.titleExpandableSvgContainer;
+  }
   public getCssTitleExpandableSvg(): string {
-    if (this.state === "default" || this.isSingleInputMode) return null;
     return this.cssClasses.titleExpandableSvg;
   }
   protected calcCssClasses(css: any): any { return undefined; }
@@ -1030,21 +1066,21 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
   /**
    * Gets or sets minimum survey element width in CSS values.
    *
-   * Default value: "300px" (taken from [`settings.minWidth`](https://surveyjs.io/form-library/documentation/settings#minWidth))
+   * Default value: "" (the element uses the theme's `--sjs-element-min-width` value)
    * @see maxWidth
    * @see renderWidth
    * @see width
    */
-  @property() minWidth: string;
+  @property({ defaultValue: "" }) minWidth: string;
   /**
    * Gets or sets maximum survey element width in CSS values.
    *
-   * Default value: "100%" (taken from [`settings.maxWidth`](https://surveyjs.io/form-library/documentation/settings#maxWidth))
+   * Default value: "" (the element width is not limited)
    * @see minWidth
    * @see renderWidth
    * @see width
    */
-  @property() maxWidth: string;
+  @property({ defaultValue: "" }) maxWidth: string;
 
   /**
    * Returns a calculated width of the rendered survey element in CSS values.
@@ -1100,38 +1136,74 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
   private setRootStyle() {
     this.rootStyle = this.calcRootStyle();
   }
-  protected calcRootStyle(): any {
-    const style: { [index: string]: any } = {};
-    let _width;
-    if (!!this.parent) {
-      const columns = this.parent.getColumsForElement(this as any);
-      _width = columns.reduce((sum, col) => col.effectiveWidth + sum, 0);
-      if (!!_width && _width !== 100) {
-        style["flexGrow"] = 1;
-        style["flexShrink"] = 0;
-        style["flexBasis"] = _width + "%";
-        style["minWidth"] = undefined;
-        style["maxWidth"] = this.maxWidth;
+  /**
+   * A total width, in percent, of the grid layout columns this element occupies, or 0 when the grid layout is disabled.
+   */
+  private get gridColumnsWidth(): number {
+    if (!this.parent) return 0;
+    const columns = this.parent.getColumsForElement(this as any);
+    return columns.reduce((sum, col) => col.effectiveWidth + sum, 0);
+  }
+  /**
+   * Returns `true` if the element occupies a part of a grid layout row. Such elements are sized by their columns.
+   */
+  public get isInGridColumn(): boolean {
+    const width = this.gridColumnsWidth;
+    return !!width && width !== 100;
+  }
+  /**
+   * Returns `false` for elements that shrink to their content instead of getting the default element min-width.
+   */
+  protected get hasMinWidth(): boolean { return true; }
+  /**
+   * The default element min-width, which makes an element wrap onto its own row when the row gets too narrow,
+   * applies only to elements sized by the flex basis. Grid columns and panels shrink to their content instead.
+   * An element with its own minWidth replaces the default with an inline style.
+   */
+  private get hasDefaultMinWidth(): boolean {
+    return this.hasMinWidth && !this.minWidth && !this.isInGridColumn && this.allowRootStyle && !!this.renderWidth;
+  }
+  public getWrapperCss(): string {
+    const css = this.survey?.getCss() || {};
+    return new CssClassBuilder()
+      .append(css.elementWrapper)
+      .append(css.elementWrapperMinWidth, this.hasDefaultMinWidth)
+      .append(this.cssClasses.questionWrapper)
+      .toString();
+  }
+  /**
+   * Returns the minWidth CSS value for an element that overrides the default min-width. It is scaled the same way as the theme's default.
+   */
+  private calcMinWidth(): string {
+    if (!this.minWidth) return "";
+    let minWidth = "" + this.minWidth;
+    if (minWidth === "auto") return "";
+    if (minWidth.indexOf("px") > -1 && !!this.survey) {
+      const minWidthNum = parseFloat(minWidth.replace("px", ""));
+      if (!isNaN(minWidthNum)) {
+        minWidth = minWidthNum * (this.survey as any).widthScale / 100 + "px";
       }
     }
-    if (Object.keys(style).length == 0) {
-      let minWidth: string | number = "" + this.minWidth;
-      if (!!minWidth && minWidth != "auto") {
-        if (minWidth.indexOf("px") != -1 && this.survey) {
-          minWidth = minWidth.replace("px", "");
-          let minWidthNum = parseFloat(minWidth);
-          if (!isNaN(minWidthNum)) {
-            minWidth = minWidthNum * (this.survey as any).widthScale / 100;
-            minWidth = "" + minWidth + "px";
-          }
-        }
-        minWidth = "min(100%, " + minWidth + ")";
-      }
-      if (this.allowRootStyle && this.renderWidth) {
-        style["flexGrow"] = 1;
-        style["flexShrink"] = 1;
-        style["flexBasis"] = this.renderWidth;
+    return "min(100%, " + minWidth + ")";
+  }
+  protected calcRootStyle(): any {
+    const style: { [index: string]: any } = {};
+    const gridWidth = this.gridColumnsWidth;
+    if (!!gridWidth && gridWidth !== 100) {
+      style["flexGrow"] = 1;
+      style["flexShrink"] = 0;
+      style["flexBasis"] = gridWidth + "%";
+    } else if (this.allowRootStyle && this.renderWidth) {
+      style["flexGrow"] = 1;
+      style["flexShrink"] = 1;
+      style["flexBasis"] = this.renderWidth;
+    }
+    if (Object.keys(style).length > 0) {
+      const minWidth = this.calcMinWidth();
+      if (!!minWidth) {
         style["minWidth"] = minWidth;
+      }
+      if (!!this.maxWidth) {
         style["maxWidth"] = this.maxWidth;
       }
     }
@@ -1156,6 +1228,7 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
   public get clickTitleFunction(): any {
     if (this.needClickTitleFunction()) {
       return (event?: MouseEvent) => {
+        (event as any).isHandledByTitle = true;
         if (!!event && this.isContainsSelection(event.target)) {
           return;
         }
@@ -1165,12 +1238,30 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
     return undefined;
   }
   protected needClickTitleFunction(): boolean {
-    return this.state !== "default";
+    return this.state !== "default" && this.state !== "collapsed";
+  }
+  protected needClickRootFunction(): boolean {
+    return this.state == "collapsed";
   }
   protected processTitleClick() {
     if (this.state !== "default") {
       this.toggleState();
     }
+  }
+  public get clickRootFunction(): any {
+    if (this.needClickRootFunction()) {
+      return (event?: MouseEvent) => {
+        if ((event as any).isHandledByTitle) {
+          delete (event as any).isHandledByTitle;
+          return;
+        }
+        if (!!event && this.isContainsSelection(event.target)) {
+          return;
+        }
+        return this.processTitleClick();
+      };
+    }
+    return undefined;
   }
   public get hasAdditionalTitleToolbar(): boolean {
     return false;
@@ -1180,6 +1271,13 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
   }
   protected getAdditionalTitleToolbar(): ActionContainer | null {
     return null;
+  }
+  protected getCssHeader(cssClasses: any): string {
+    const isExpandable = this.state !== "default";
+    return new CssClassBuilder()
+      .append(cssClasses.header)
+      .append(cssClasses.headerExpandable, isExpandable)
+      .toString();
   }
   protected getCssTitle(cssClasses: any): string {
     if (!cssClasses) return "";
@@ -1240,7 +1338,16 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
   private get isAnimatingCollapseExpand() {
     return this._isAnimatingCollapseExpand || this._renderedIsExpanded != this.isExpanded;
   }
+  protected notifyElementContentVisibilityChanged() {
+    if (this.survey) {
+      this.lifecycleCallbacks.elementContentVisibilityChanged(this);
+    }
+  }
   protected onElementExpanded(elementIsRendered: boolean) {
+    this.notifyElementContentVisibilityChanged();
+  }
+  protected onElementCollapsed() {
+    this.notifyElementContentVisibilityChanged();
   }
   private getExpandCollapseAnimationOptions(): IAnimationConsumer {
     const beforeRunAnimation = (el: HTMLElement) => {
@@ -1269,7 +1376,10 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
         return {
           cssClass: cssClasses.contentLeave,
           onBeforeRunAnimation: beforeRunAnimation,
-          onAfterRunAnimation: afterRunAnimation
+          onAfterRunAnimation: (el) => {
+            afterRunAnimation(el);
+            this.onElementCollapsed();
+          },
         };
       },
       getAnimatedElement: () => {
@@ -1303,8 +1413,13 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
   public set renderedIsExpanded(val: boolean) {
     const oldValue = this._renderedIsExpanded;
     this.animationCollapsed.sync(val);
-    if (!this.isExpandCollapseAnimationEnabled && !oldValue && this.renderedIsExpanded) {
-      this.onElementExpanded(false);
+    if (!this.isExpandCollapseAnimationEnabled) {
+      if (oldValue !== val) {
+        if (!oldValue)
+          this.onElementExpanded(false);
+        else
+          this.onElementCollapsed();
+      }
     }
   }
 
@@ -1336,6 +1451,7 @@ export class SurveyElement<E = any> extends SurveyElementCore implements ISurvey
     return seed;
   }
   public randomSeedChanged(): void {}
+  public ensureRowsVisibility() {}
 }
 
 export class RenderingCompletedAwaiter {

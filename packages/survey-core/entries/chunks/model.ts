@@ -73,7 +73,6 @@ function checkPrefix(prefix: string): boolean {
   const location = DomWindowHelper.getLocation();
   if (!!location && !!location.hostname) {
     const hn = location.hostname.toLowerCase();
-    ds.push("localhost");
     for (let i = 0; i < ds.length; i++) {
       if (hn.indexOf(ds[i]) > -1) return true;
     }
@@ -83,7 +82,7 @@ function checkPrefix(prefix: string): boolean {
 }
 
 export { settings, ISurveyEnvironment } from "../../src/settings";
-export { Helpers, HashTable } from "../../src/helpers";
+export { Helpers, HashTable, ISurveyDateProvider } from "../../src/helpers";
 export { DomWindowHelper, DomDocumentHelper } from "../../src/global_variables_utils";
 export {
   AnswerCountValidator,
@@ -116,6 +115,9 @@ export {
   ISurveyChoiceCallbacks,
   ISurveyCssCallbacks,
   ISurveyAfterRenderCallbacks,
+  ISurveyWebProvider,
+  ISurveyWebRequest,
+  ISurveyWebResponse,
   ISurveyTitleSettings,
   ISurveyValidation,
   ISurveySingleInput,
@@ -166,10 +168,11 @@ export {
   Variable,
   FunctionOperand,
   ArrayOperand,
-  UnaryOperand
+  UnaryOperand,
+  runBinaryOperator
 } from "../../src/expressions/expressions";
 export { ConditionsParser } from "../../src/conditions/conditionsParser";
-export { ProcessValue } from "../../src/conditions/conditionProcessValue";
+export { ProcessValue, ValueGetter, VariableGetterContext } from "../../src/conditions/conditionProcessValue";
 export {
   JsonError,
   JsonIncorrectTypeError,
@@ -244,7 +247,7 @@ export { QuestionRadiogroupModel } from "../../src/question_radiogroup";
 export { QuestionRatingModel, RatingItem as RatingItemValue, RatingItem as RenderedRatingItem } from "../../src/question_rating";
 export { QuestionSliderModel, SliderLabelItemValue } from "../../src/question_slider";
 export { QuestionExpressionModel } from "../../src/question_expression";
-export { QuestionTextBase, CharacterCounter } from "../../src/question_textbase";
+export { QuestionTextBase, CharacterCounter, ICharacterCounterAction } from "../../src/question_textbase";
 export { QuestionTextModel } from "../../src/question_text";
 export { QuestionBooleanModel } from "../../src/question_boolean";
 export {
@@ -260,11 +263,14 @@ export {
 } from "../../src/question_paneldynamic";
 export { SurveyTimer } from "../../src/surveytimer";
 export { SurveyTimerModel } from "../../src/surveyTimerModel";
+export { SurveyProgressTextModel } from "../../src/surveyProgressTextModel";
+export { SurveyNavigationLayoutModel } from "../../src/surveyNavigationLayoutModel";
 export * from "../../src/surveyToc";
 export { SurveyProgressModel } from "../../src/surveyProgress";
-export { ProgressButtons, ProgressButtonsResponsivityManager, IProgressButtonsViewModel } from "../../src/progress-buttons";
+export { ProgressButtons } from "../../src/progress-buttons";
 export * from "../../src/themes";
-export { SurveyModel } from "../../src/survey";
+export { SurveyModel, DefaultTheme, getBuiltInVariableNames } from "../../src/survey";
+export { IRunningAsyncOperation, SurveyAsyncOperationType } from "../../src/survey";
 export * from "../../src/survey-events-api";
 export {
   SurveyTrigger,
@@ -274,7 +280,8 @@ export {
   SurveyTriggerCopyValue,
   SurveyTriggerRunExpression,
   SurveyTriggerSkip,
-  Trigger
+  Trigger,
+  buildTriggerExpression
 } from "../../src/trigger";
 export { PopupSurveyModel, SurveyWindowModel } from "../../src/popup-survey";
 export { TextPreProcessor } from "../../src/textPreProcessor";
@@ -299,7 +306,7 @@ export {
 export { ScrollViewModel } from "../../src/scroll";
 export { ListModel } from "../../src/list";
 export { MultiSelectListModel } from "../../src/multiSelectListModel";
-export { PopupModel, IDialogOptions } from "../../src/popup";
+export { PopupModel, IDialogOptions, IConfirmDialogOptions } from "../../src/popup";
 export { PopupBaseViewModel } from "../../src/popup-view-model";
 export { PopupDropdownViewModel } from "../../src/popup-dropdown-view-model";
 export { PopupModalViewModel } from "../../src/popup-modal-view-model";
@@ -314,20 +321,26 @@ export {
 } from "../../src/question_buttongroup";
 export { IsMobile, IsTouch, _setIsTouch, _setIsTablet } from "../../src/utils/devices";
 export * from "../../src/utils/browser";
+export * from "../../src/utils/color";
 export * from "../../src/utils/confirm-dialog";
 export * from "../../src/utils/dom-utils";
 export * from "../../src/utils/file-utils";
 export * from "../../src/utils/icons";
 export * from "../../src/utils/key2click";
 export * from "../../src/utils/animation-dom";
-export * from "../../src/utils/utils";
 export { InputMaskBase } from "../../src/mask/mask_base";
+export { IMaskLocaleChange } from "../../src/mask/mask_utils";
+export { IDateTimeInputFragments } from "../../src/mask/mask_datetime";
+export { ILocaleData, localeData, getLocaleDataValue } from "../../src/locale-data";
 export { InputMaskPattern } from "../../src/mask/mask_pattern";
 export { InputMaskNumeric } from "../../src/mask/mask_numeric";
 export { InputMaskDateTime } from "../../src/mask/mask_datetime";
 export { InputMaskCurrency } from "../../src/mask/mask_currency";
 export * from "../../src/utils/cssClassBuilder";
 export * from "../../src/utils/text-area";
+export * from "../../src/utils/shadow-effects";
+export * from "../../src/utils/resize-manager";
+export * from "../../src/utils/base-theme-init";
 
 export { surveyCss, defaultCss, defaultThemeName } from "../../src/defaultCss/defaultCss";
 
@@ -337,3 +350,4 @@ export { surveyCss, defaultCss, defaultThemeName } from "../../src/defaultCss/de
 export { DragDropCore } from "../../src/dragdrop/core";
 export { DragDropChoices } from "../../src/dragdrop/choices";
 export { DragDropRankingSelectToRank } from "../../src/dragdrop/ranking-select-to-rank";
+export { default as BaseTheme } from "../../src/default-theme/base-theme";

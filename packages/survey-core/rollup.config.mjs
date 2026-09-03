@@ -14,19 +14,17 @@ const buildPlatformJson = {
   "license": "MIT",
   "homepage": "https://surveyjs.io/",
   "author": "DevSoft Baltic OU <info@devsoftbaltic.com>",
-  "description": "A framework-independent core of the SurveyJS Form Library that works with rendering packages. Use it to integrate dynamic, interactive JSON-based forms and surveys into your app, collect user responses, and send them to your own database.",
+  "description": "Framework-independent core of SurveyJS Form Library. Provides the form model and logic used by survey-react-ui, survey-angular-ui, survey-vue3-ui, and survey-js-ui to render dynamic, JSON-based forms and collect responses.",
   "keywords": [
     "survey",
     "form",
     "surveyjs",
     "survey-library",
-    "form-component",
     "form-rendering",
     "survey-renderer",
     "dynamic-form",
     "interactive-form",
     "form-library",
-    "form-management",
     "questionnaire",
     "data-collection",
     "data-validation",
@@ -35,12 +33,19 @@ const buildPlatformJson = {
     "ui-component",
     "json",
     "json-schema",
-    "schema-form",
-    "survey-renderer",
-    "client-side",
-    "frontend",
     "javascript",
-    "typescript"
+    "typescript",
+    "schema-form",
+    "conditional-logic",
+    "quiz",
+    "poll",
+    "localization",
+    "css",
+    "shadcn",
+    "mui",
+    "material-ui",
+    "bootstrap",
+    "bootswatch"
   ],
   "files": [
     "**/*"
@@ -53,7 +58,13 @@ const buildPlatformJson = {
       "import": "./fesm/survey-core.mjs",
       "require": "./survey.core.js"
     },
+    "./linter": {
+      "types": "./typings/entries/linter.d.ts",
+      "import": "./fesm/linter/index.mjs",
+      "require": "./linter/index.js"
+    },
     "./*.css": "./*.css",
+    "./fonts/*": "./fonts/*",
     "./survey.i18n": {
       "import": "./fesm/survey.i18n.mjs",
       "require": "./survey.i18n.js"
@@ -66,6 +77,11 @@ const buildPlatformJson = {
       "import": "./fesm/i18n/*.mjs",
       "require": "./i18n/*.js"
     },
+    "./tester": {
+      "types": "./typings/entries/tester.d.ts",
+      "import": "./fesm/tester.mjs",
+      "require": "./tester.js"
+    },
     "./themes": {
       "types": "./themes/index.d.ts",
       "import": "./fesm/themes/index.mjs",
@@ -76,8 +92,14 @@ const buildPlatformJson = {
       "import": "./fesm/themes/index.mjs",
       "require": "./themes/index.js"
     },
+    "./themes/adapters/*.css": "./themes/adapters/*.css",
+    "./themes/adapters/icons/*": {
+      "import": "./fesm/themes/adapters/icons/*.mjs",
+      "require": "./themes/adapters/icons/*.js"
+    },
     "./themes/*": {
       "types": "./themes/*.d.ts",
+      "import": "./themes/*.js",
       "require": "./themes/*.js"
     },
     "./icons/*": {
@@ -92,6 +114,11 @@ const buildPlatformJson = {
   },
   "typings": "./typings/entries/index.d.ts"
 };
+
+// The stylesheets reference these as url(fonts/...) instead of inlining them, so the
+// files have to sit next to the emitted CSS. Copied unconditionally: a dev build needs
+// them just as much as a release one. The Open Sans subsets ship with their license.
+fs.copySync(resolve(__dirname, "src/fonts"), resolve(buildPath, "fonts"));
 
 if (process.env.emitNonSourceFiles === "true") {
   fs.mkdirSync(buildPath, { recursive: true });
@@ -115,6 +142,7 @@ export default (options = {}) => {
       external: [],
       dir: resolve(buildPath, "./fesm"),
       version: pkg.version,
+      noEmitOnError: !options.watch,
     }),
     createUmdConfig({
       input: {
@@ -128,6 +156,7 @@ export default (options = {}) => {
       globalName: "Survey",
       globals: {},
       version: pkg.version,
+      noEmitOnError: !options.watch,
     }),
     createCssConfig({
       input: {

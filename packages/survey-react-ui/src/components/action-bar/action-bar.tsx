@@ -8,9 +8,6 @@ import { ReactElementFactory } from "../../element-factory";
 import { SurveyElementBase } from "../../reactquestion_element";
 import { SurveyAction } from "./action-bar-item";
 
-export * from "./action-bar-item-dropdown";
-export * from "./action-bar-separator";
-
 interface IActionBarProps {
   model: ActionContainer<Action>;
   handleClick?: boolean;
@@ -81,7 +78,7 @@ export class SurveyActionBar extends SurveyElementBase<IActionBarProps, any> {
     return this.model.renderedActions.concat([]).map(
       (item: Action, itemIndex: number) => {
         return (
-          <SurveyAction item={item} key={item.renderedId}></SurveyAction>
+          <SurveyAction item={item} key={item.uniqueId}></SurveyAction>
         );
       }
     );

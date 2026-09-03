@@ -11,7 +11,7 @@ export var dutchSurveyStrings = {
   previewText: "Voorbeeld",
   // "Edit"
   editText: "Bewerk",
-  // "Start"
+  // [Auto-translated] "Start"
   startSurveyText: "Start",
   // [Auto-translated] "Please leave a comment"
   commentText: "Laat een reactie achter",
@@ -69,8 +69,12 @@ export var dutchSurveyStrings = {
   stepError: "Voer een waarde in die overeenkomt met de stapgrootte van {0}.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "De waarde mag niet groter zijn dan {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Ongeldige invoer",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Nummers zijn niet toegestaan.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Vul de waarde in om aan het vereiste formaat te voldoen.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Vul minstens {0} karakters in",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var dutchSurveyStrings = {
   urlGetChoicesError: "De vraag gaf een leeg antwoord terug of de 'pad' eigenschap is niet correct",
   // "The file size should not exceed {0}."
   exceedMaxSize: "De grootte van het bestand mag niet groter zijn dan {0}",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bytes, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "Het maximale aantal bestanden dat je kunt uploaden is {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var dutchSurveyStrings = {
   noRowsText: "Er zijn geen rijen.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Rij {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Nieuwe toevoegen",
@@ -155,13 +161,11 @@ export var dutchSurveyStrings = {
   savingDataError: "Er was een probleem en we konden de resultaten niet bewaren.",
   // "The results were saved successfully!"
   savingDataSuccess: "De resultaten werden succesvol bewaard!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Uw antwoord is groter dan 64 kB. Verklein de grootte van uw bestanden en probeer het opnieuw of neem contact op met de eigenaar van de enquête.",
   // "Try again"
   saveAgainButton: "Probeer opnieuw",
   // "min"
   timerMin: "minimum",
-  // "sec"
+  // [Auto-translated] "sec"
   timerSec: "sec",
   // "You have spent {0} on this page and {1} in total."
   timerSpentAll: "U heeft {0} gespendeerd op deze pagina en {1} in totaal.",
@@ -240,7 +244,27 @@ export var dutchSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Inhoudsopgave",
   // [Auto-translated] "Progress bar"
-  progressbar: "Voortgangsbalk"
+  progressbar: "Voortgangsbalk",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Pagina {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "d",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "m",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "j",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "u",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "U",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "M",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "t",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "T"
 };
 
 setupLocale({ localeCode: "nl", strings: dutchSurveyStrings, nativeName: "nederlands", englishName: "Dutch" });

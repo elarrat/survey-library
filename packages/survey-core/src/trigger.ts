@@ -5,14 +5,31 @@ import { Serializer } from "./jsonobject";
 import { property } from "./decorators";
 import { ExpressionRunner } from "./expressions/expressionRunner";
 import { OperandMaker } from "./expressions/expressions";
-import { ValueGetter } from "./conditions/conditionProcessValue";
 import { settings } from "./settings";
 
-/**
- * A base class for all triggers.
- * A trigger calls a method when the expression change the result: from false to true or from true to false.
- * Please note, it runs only one changing the expression result.
- */
+export function hasTriggerOperator(operator: string): boolean {
+  if (!operator || typeof operator !== "string") return false;
+  const operators: any = Trigger.operators;
+  return Object.prototype.hasOwnProperty.call(operators, operator) &&
+    typeof operators[operator] === "function";
+}
+
+function normalizeTriggerOperator(operator: string): string {
+  const res = !!operator && typeof operator === "string" ? operator.toLowerCase() : "";
+  return hasTriggerOperator(res) ? res : "equal";
+}
+
+export function buildTriggerExpression(name: string, operator: string, value: any): string {
+  if (!name) return "";
+  const op = normalizeTriggerOperator(operator);
+  // "empty"/"notempty" are the only operators that run without a value
+  const requireValue = op !== "empty" && op !== "notempty";
+  // Base.isValueEmpty trims strings before the check, hence trimValue here
+  const trimmed = typeof value === "string" ? value.trim() : value;
+  if (requireValue && Helpers.isValueEmpty(trimmed)) return "";
+  return "{" + name + "} " + op + " " + OperandMaker.toOperandString(value);
+}
+
 export class Trigger extends Base {
   static operatorsValue: HashTable<Function> = null;
   static get operators() {
@@ -56,7 +73,6 @@ export class Trigger extends Base {
   constructor() {
     super();
   }
-  public get id(): number { return this.uniqueId; }
   public getType(): string {
     return "triggerbase";
   }
@@ -78,7 +94,7 @@ export class Trigger extends Base {
   public set operator(value: string) {
     if (!value) return;
     value = value.toLowerCase();
-    if (!Trigger.operators[value]) return;
+    if (!hasTriggerOperator(value)) return;
     this.setPropertyValue("operator", value);
   }
   @property() value: any;
@@ -122,7 +138,7 @@ export class Trigger extends Base {
   }
   protected canSuccessOnEmptyExpression(): boolean { return false; }
   public check(value: any): void {
-    var triggerResult = Trigger.operators[this.operator](value, this.value);
+    var triggerResult = Trigger.operators[normalizeTriggerOperator(this.operator)](value, this.value);
     if (triggerResult) {
       this.onSuccess(null);
     } else {
@@ -143,38 +159,16 @@ export class Trigger extends Base {
   protected onFailure(): void {}
   protected onSuccessExecuted(): void {}
   private buildExpression(): string {
-    if (!this.name) return "";
-    if (this.isValueEmpty(this.value) && this.isRequireValue) return "";
-    return (
-      "{" +
-      this.name +
-      "} " +
-      this.operator +
-      " " +
-      OperandMaker.toOperandString(this.value)
-    );
+    return buildTriggerExpression(this.name, this.operator, this.value);
   }
   private isCheckRequired(runner: ExpressionRunner, keys: any): boolean {
     if (!keys) return false;
-    if (runner?.hasFunction() === true) return true;
-    return new ValueGetter().isAnyKeyChanged(keys, this.getUsedVariables(runner));
+    return !this.canSkipExpressionByKeys(runner, keys, this.getUsedVariables(runner));
   }
   protected getUsedVariables(runner: ExpressionRunner): string[] {
+    // The "-unwrapped" postfix is handled in ValueGetter.isAnyKeyChanged
     if (!runner) return [];
-    const res = runner.getVariables();
-    if (Array.isArray(res)) {
-      const unw = settings.expressionVariables.unwrapPostfix;
-      for (let i = res.length - 1; i >= 0; i--) {
-        const s = res[i];
-        if (s.endsWith(unw)) {
-          res.push(s.substring(0, s.length - unw.length));
-        }
-      }
-    }
-    return res;
-  }
-  private get isRequireValue(): boolean {
-    return this.operator !== "empty" && this.operator != "notempty";
+    return runner.getVariables();
   }
 }
 
@@ -188,9 +182,6 @@ export interface ISurveyTriggerOwner {
   focusQuestion(name: string): boolean;
 }
 
-/**
- * It extends the Trigger base class and add properties required for SurveyJS classes.
- */
 export class SurveyTrigger extends Trigger {
   protected ownerValue: ISurveyTriggerOwner = null;
   constructor() {
@@ -219,10 +210,7 @@ export class SurveyTrigger extends Trigger {
     }
   }
 }
-/**
- * If expression returns true, it makes questions/pages visible.
- * Ohterwise it makes them invisible.
- */
+
 export class SurveyTriggerVisible extends SurveyTrigger {
   public pages: string[] = [];
   public questions: string[] = [];
@@ -252,9 +240,6 @@ export class SurveyTriggerVisible extends SurveyTrigger {
     item.visible = false;
   }
 }
-/**
- * If expression returns true, it completes the survey.
- */
 export class SurveyTriggerComplete extends SurveyTrigger {
   constructor() {
     super();
@@ -278,9 +263,7 @@ export class SurveyTriggerComplete extends SurveyTrigger {
     this.owner.canBeCompleted(this, false);
   }
 }
-/**
- * If expression returns true, the value from property **setValue** will be set to **setToName**
- */
+
 export class SurveyTriggerSetValue extends SurveyTrigger {
   constructor() {
     super();
@@ -311,9 +294,7 @@ export class SurveyTriggerSetValue extends SurveyTrigger {
     this.owner.setTriggerValue(this.setToName, Helpers.getUnbindValue(this.setValue), this.isVariable);
   }
 }
-/**
- * If expression returns true, the survey go to question **gotoName** and focus it.
- */
+
 export class SurveyTriggerSkip extends SurveyTrigger {
   constructor() {
     super();
@@ -331,9 +312,7 @@ export class SurveyTriggerSkip extends SurveyTrigger {
     this.owner.focusQuestion(this.gotoName);
   }
 }
-/**
- * If expression returns true, the **runExpression** will be run. If **setToName** property is not empty then the result of **runExpression** will be set to it.
- */
+
 export class SurveyTriggerRunExpression extends SurveyTrigger {
   constructor() {
     super();
@@ -359,9 +338,6 @@ export class SurveyTriggerRunExpression extends SurveyTrigger {
   }
 }
 
-/**
- * If expression returns true, the value from question **fromName** will be set into **setToName**.
- */
 export class SurveyTriggerCopyValue extends SurveyTrigger {
   constructor() {
     super();
@@ -386,7 +362,7 @@ export class SurveyTriggerCopyValue extends SurveyTrigger {
   protected canSuccessOnEmptyExpression(): boolean { return true; }
   protected getUsedVariables(runner: ExpressionRunner): string[] {
     const res = super.getUsedVariables(runner);
-    if (res.length === 0 && !!this.fromName) {
+    if (!!this.fromName && res.indexOf(this.fromName) < 0) {
       res.push(this.fromName);
     }
     return res;

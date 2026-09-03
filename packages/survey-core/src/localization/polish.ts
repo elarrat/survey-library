@@ -11,7 +11,7 @@ export var polishSurveyStrings = {
   previewText: "Premiera",
   // "Edit"
   editText: "Edycja",
-  // "Start"
+  // [Auto-translated] "Start"
   startSurveyText: "Start",
   // [Auto-translated] "Please leave a comment"
   commentText: "Proszę o komentarz",
@@ -69,8 +69,12 @@ export var polishSurveyStrings = {
   stepError: "Wprowadź wartość odpowiadającą rozmiarowi kroku {0}.",
   // "The value should not be greater than {0}"
   maxError: "Wartość nie powinna być większa niż {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Nieprawidłowe wejście",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Liczby są niedozwolone.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Prosimy o wypełnienie wartości, aby pasowało do wymaganego formatu.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Proszę wpisać co najmniej {0} znaków.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var polishSurveyStrings = {
   urlGetChoicesError: "Żądanie nie zwróciło danych albo ścieżka jest nieprawidłowa",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Rozmiar przesłanego pliku nie może przekraczać {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bajty, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "Maksymalna liczba plików, które możesz przesłać, to {0}.",
   // "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "Nie można przesłać plików. Dodaj moduł obsługi zdarzenia \"onUploadFiles\".",
   // "Response required: enter another value."
@@ -127,7 +135,7 @@ export var polishSurveyStrings = {
   noRowsText: "Nie ma rzędów.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Wiersz {indeks wiersza}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Dodaj panel",
@@ -153,11 +161,9 @@ export var polishSurveyStrings = {
   savingDataError: "Wystąpił błąd i wyniki nie mogły zostać zapisane.",
   // "The results were saved successfully!"
   savingDataSuccess: "Wyniki zostały poprawnie zapisane!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Twoja odpowiedź przekracza 64 KB. Zmniejsz rozmiar plików i spróbuj ponownie lub skontaktuj się z właścicielem ankiety.",
   // "Try again"
   saveAgainButton: "Spróbuj ponownie",
-  // "min"
+  // [Auto-translated] "min"
   timerMin: "min",
   // "sec"
   timerSec: "sek",
@@ -238,7 +244,27 @@ export var polishSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Spis treści",
   // [Auto-translated] "Progress bar"
-  progressbar: "Pasek postępu"
+  progressbar: "Pasek postępu",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Strona {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "d",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "m",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "r",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "g",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "G",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "M",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "t",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "T"
 };
 
 setupLocale({ localeCode: "pl", strings: polishSurveyStrings, nativeName: "polski", englishName: "Polish" });

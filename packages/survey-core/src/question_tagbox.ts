@@ -31,6 +31,13 @@ export class QuestionTagboxModel extends questionDropdownMixin(QuestionCheckboxM
       this.dropdownListModel.setInputPlaceholder(newValue);
     }
   }
+  protected calculateReadOnlyText(): string {
+    return this.getDisplayValue(true, undefined, true);
+  }
+  protected getOtherItemDisplayValue(val?: any, isReadOnly?: boolean): string | undefined {
+    if (isReadOnly) return undefined;
+    return super.getOtherItemDisplayValue(val);
+  }
   supportElementsInChoice(): boolean { return false; }
   public locStrsChanged(): void {
     super.locStrsChanged();
@@ -66,6 +73,7 @@ export class QuestionTagboxModel extends questionDropdownMixin(QuestionCheckboxM
    * Default value: `false`
    *
    *>  Custom choices will only be stored temporarily for the duration of the current browser session. If you want to save them in a data storage, handle the [`onCreateCustomChoiceItem`](https://surveyjs.io/form-library/documentation/api-reference/survey-data-model#onCreateCustomChoiceItem) event.
+   * @since 2.0.4
    */
   @property({
     onSet: (newValue: boolean, target: QuestionTagboxModel) => {
@@ -74,6 +82,8 @@ export class QuestionTagboxModel extends questionDropdownMixin(QuestionCheckboxM
       }
     }
   }) allowCustomChoices: boolean;
+
+  @property({ localizable: { defaultStr: "createCustomItem" } }) createCustomChoiceText: string;
 
   /**
    * Specifies whether to display a button that clears the selected value.
@@ -236,6 +246,7 @@ Serializer.addClass(
       name: "allowCustomChoices:boolean", default: false,
       visibleIf: (obj: any): boolean => !obj.choicesFromQuestion, dependsOn: "choicesFromQuestion"
     },
+    { name: "createCustomChoiceText", serializationProperty: "locCreateCustomChoiceText", visibleIf: (obj: any): boolean => obj.allowCustomChoices },
     { name: "textWrapEnabled:boolean", default: true },
     { name: "choicesLazyLoadEnabled:boolean", default: false, visible: false },
     { name: "choicesLazyLoadPageSize:number", default: 25, visible: false },

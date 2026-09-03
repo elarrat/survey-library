@@ -5,13 +5,6 @@ import { Serializer } from "./jsonobject";
 import { property } from "./decorators";
 import { ExpressionRunner } from "./expressions/expressionRunner";
 
-/**
- * The calculated value is a way to define the variable in Survey Creator.
- * It has two main properties: name and expression. Based on expression the value read-only property is automatically calculated.
- * The name property should be unique though all calculated values.
- * It uses survey.getVariable/seruvey.setVariable functions to get/set its value. The class do not store its value internally.
- * You may set includeIntoResult property to true to store this calculated value into survey result.
- */
 export class CalculatedValue extends Base {
   private data: ISurveyVariables;
   private expressionIsRunning: boolean = false;
@@ -101,6 +94,9 @@ export class CalculatedValue extends Base {
   private rerunExpression() {
     if (!this.canRunExpression) return;
     this.runExpression({ survey: this.getSurvey() });
+  }
+  protected override onDependencyValueChanged(obj: Base, propertyName: string): void {
+    this.rerunExpression();
   }
   private runExpressionCore(calculatedValues: Array<CalculatedValue>, properties: HashTable<any>) {
     if (!this.canRunExpression || !this.ensureExpression()) return;

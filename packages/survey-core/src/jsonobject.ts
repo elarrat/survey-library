@@ -64,13 +64,6 @@ export interface IJsonPropertyInfo {
   maxValue?: any;
   minValue?: any;
 }
-/**
- * Contains information about a property of a survey element (page, panel, questions, and etc).
- * @see addProperty
- * @see removeProperty
- * @see [Add Properties](https://surveyjs.io/Documentation/Survey-Creator#addproperties)
- * @see [Remove Properties](https://surveyjs.io/Documentation/Survey-Creator#removeproperties)
- */
 export class JsonObjectProperty implements IObject, IJsonPropertyInfo {
   public static getItemValuesDefaultValue: (val: any, type: string) => any;
   [key: string]: any;
@@ -93,7 +86,6 @@ export class JsonObjectProperty implements IObject, IJsonPropertyInfo {
   public isSerializableFunc: (obj: any) => boolean;
   public isLightSerializable: boolean = true;
   public isCustom: boolean = false;
-  public isDynamicChoices: boolean = false; //TODO obsolete, use dependsOn attribute
   public isBindable: boolean = false;
   public className: string;
   public alternativeName: string;
@@ -576,7 +568,7 @@ export class CustomPropertiesCollection {
     }
     if (prop.type === "condition" || prop.type === "expression") {
       if (!!prop.onExecuteExpression) {
-        obj.addExpressionProperty(prop.name, prop.onExecuteExpression);
+        obj.addExpressionProperty(prop.name, prop.onExecuteExpression, undefined, prop.type === "expression");
       }
     }
   }
@@ -592,7 +584,7 @@ export class JsonMetadataClass {
   private isCustomValue: boolean;
   private allProperties: Array<JsonObjectProperty>;
   private requiredProperties: Array<JsonObjectProperty>;
-  private hashProperties: HashTable<JsonObjectProperty>;
+  private hashProperties: Map<string, JsonObjectProperty>;
   constructor(
     public name: string,
     properties: Array<any>,
@@ -622,7 +614,7 @@ export class JsonMetadataClass {
   }
   public findProperty(name: string): JsonObjectProperty {
     this.fillAllProperties();
-    return this.hashProperties[name];
+    return this.hashProperties.get(name);
   }
   public getAllProperties(): Array<JsonObjectProperty> {
     this.fillAllProperties();
@@ -650,14 +642,14 @@ export class JsonMetadataClass {
   private fillAllProperties(): void {
     if (!!this.allProperties) return;
     this.allProperties = [];
-    this.hashProperties = {};
-    const localProperties: HashTable<JsonObjectProperty> = {};
-    this.properties.forEach(prop => localProperties[prop.name] = prop);
+    this.hashProperties = new Map<string, JsonObjectProperty>();
+    const localProperties = new Map<string, JsonObjectProperty>();
+    this.properties.forEach(prop => localProperties.set(prop.name, prop));
     const parentClass = !!this.parentName ? Serializer.findClass(this.parentName) : null;
     if (!!parentClass) {
       const parentProperties = parentClass.getAllProperties();
       parentProperties.forEach(prop => {
-        const overridedProp = localProperties[prop.name];
+        const overridedProp = localProperties.get(prop.name);
         if (!!overridedProp) {
           overridedProp.mergeWith(prop);
           this.addPropCore(overridedProp);
@@ -667,16 +659,16 @@ export class JsonMetadataClass {
       });
     }
     this.properties.forEach(prop => {
-      if (!this.hashProperties[prop.name]) {
+      if (!this.hashProperties.has(prop.name)) {
         this.addPropCore(prop);
       }
     });
   }
   private addPropCore(prop: JsonObjectProperty): void {
     this.allProperties.push(prop);
-    this.hashProperties[prop.name] = prop;
+    this.hashProperties.set(prop.name, prop);
     if (!!prop.alternativeName) {
-      this.hashProperties[prop.alternativeName] = prop;
+      this.hashProperties.set(prop.alternativeName, prop);
     }
   }
   private isOverridedProp(propName: string): boolean {
@@ -768,9 +760,6 @@ export class JsonMetadataClass {
       }
       if (!Helpers.isValueEmpty(propInfo.dataList)) {
         prop.dataList = propInfo.dataList;
-      }
-      if (!Helpers.isValueEmpty(propInfo.isDynamicChoices)) {
-        prop.isDynamicChoices = propInfo.isDynamicChoices;
       }
       if (!Helpers.isValueEmpty(propInfo.isBindable)) {
         prop.isBindable = propInfo.isBindable;
@@ -910,14 +899,12 @@ export class JsonMetadataClass {
   }
 }
 
-/**
- * The metadata object. It contains object properties' runtime information and allows you to modify it.
- */
 export class JsonMetadata {
-  private classes: HashTable<JsonMetadataClass> = {};
-  private alternativeNames: HashTable<string> = {};
-  private childrenClasses: HashTable<Array<JsonMetadataClass>> = {};
-  private dynamicPropsCache: HashTable<Array<JsonObjectProperty>> = {};
+  private classes = new Map<string, JsonMetadataClass>();
+  private alternativeNames = new Map<string, string>();
+  private typeAliases = new Map<string, string>();
+  private childrenClasses = new Map<string, Array<JsonMetadataClass>>();
+  private dynamicPropsCache = new Map<string, Array<JsonObjectProperty>>();
   public onSerializingProperty: ((obj: Base, prop: JsonObjectProperty, value: any, json: any) => boolean) | undefined;
   public getObjPropertyValue(obj: any, name: string): any {
     obj = obj.getOriginalByProperty && this.isNeedUseObjWrapper(obj, name) ? obj.getOriginalByProperty(name) : obj;
@@ -934,6 +921,8 @@ export class JsonMetadata {
         const newVal = [];
         for (var i = 0; i < val.length; i++) newVal.push(val[i]);
         val = newVal;
+      } else if (!!val && typeof val === "object" && !val.getType) {
+        val = Helpers.getUnbindValue(val);
       }
       obj[name] = val;
     }
@@ -967,32 +956,41 @@ export class JsonMetadata {
     parentName: string = null
   ): JsonMetadataClass {
     name = name.toLowerCase();
-    var metaDataClass = new JsonMetadataClass(
+    const existing = this.classes.get(name);
+    if (existing) {
+      this.removeFromParentClass(existing);
+    }
+    const metaDataClass = new JsonMetadataClass(
       name,
       properties,
       creator,
       parentName
     );
-    this.classes[name] = metaDataClass;
+    this.classes.set(name, metaDataClass);
     if (parentName) {
       parentName = parentName.toLowerCase();
-      var children = this.childrenClasses[parentName];
-      if (!children) {
-        this.childrenClasses[parentName] = [];
+      if (!this.childrenClasses.has(parentName)) {
+        this.childrenClasses.set(parentName, []);
       }
-      this.childrenClasses[parentName].push(metaDataClass);
+      this.childrenClasses.get(parentName).push(metaDataClass);
     }
     return metaDataClass;
   }
   public removeClass(name: string) {
     var metaClass = this.findClass(name);
     if (!metaClass) return;
-    delete this.classes[metaClass.name];
-    if (!!metaClass.parentName) {
-      var index = this.childrenClasses[metaClass.parentName].indexOf(metaClass);
-      if (index > -1) {
-        this.childrenClasses[metaClass.parentName].splice(index, 1);
-      }
+    this.classes.delete(metaClass.name);
+    this.removeFromParentClass(metaClass);
+  }
+  private removeFromParentClass(metaClass: JsonMetadataClass) {
+    if (!metaClass.parentName) return;
+    const parentClass = this.findClass(metaClass.parentName);
+    if (!parentClass) return;
+    const children = this.childrenClasses.get(metaClass.parentName);
+    if (!children) return;
+    const index = children.indexOf(metaClass);
+    if (index > -1) {
+      children.splice(index, 1);
     }
   }
   public overrideClassCreatore(name: string, creator: () => any) {
@@ -1059,19 +1057,19 @@ export class JsonMetadata {
   public getDynamicPropertiesByTypes(objType: string, dynamicType: string, nonSerialableProps?: Array<string>): Array<JsonObjectProperty> {
     if (!dynamicType) return [];
     const cacheType = dynamicType + "-" + objType;
-    if (this.dynamicPropsCache[cacheType]) return this.dynamicPropsCache[cacheType];
+    if (this.dynamicPropsCache.has(cacheType)) return this.dynamicPropsCache.get(cacheType);
     var dynamicProps = this.getProperties(dynamicType);
     if (!dynamicProps || dynamicProps.length == 0) return [];
-    const hash: any = {};
+    const hash = new Map<string, JsonObjectProperty>();
     const props = this.getProperties(objType);
     for (var i = 0; i < props.length; i++) {
-      hash[props[i].name] = props[i];
+      hash.set(props[i].name, props[i]);
     }
     const res = [];
     if (!nonSerialableProps) nonSerialableProps = [];
     for (let i = 0; i < dynamicProps.length; i++) {
       let dProp = dynamicProps[i];
-      if (this.canAddDynamicProp(dProp, hash[dProp.name])) {
+      if (this.canAddDynamicProp(dProp, hash.get(dProp.name))) {
         if (nonSerialableProps.indexOf(dProp.name) > -1) {
           const newProp = new JsonObjectProperty(dProp.classInfo, dProp.name, dProp.isRequired);
           newProp.mergeWith(dProp);
@@ -1082,7 +1080,7 @@ export class JsonMetadata {
         res.push(dProp);
       }
     }
-    this.dynamicPropsCache[cacheType] = res;
+    this.dynamicPropsCache.set(cacheType, res);
     return res;
   }
   private canAddDynamicProp(dProp: JsonObjectProperty, orgProp: JsonObjectProperty): boolean {
@@ -1159,10 +1157,8 @@ export class JsonMetadata {
     return res;
   }
   public getAllClasses(): Array<string> {
-    var res = new Array<string>();
-    for (var name in this.classes) {
-      res.push(name);
-    }
+    const res = new Array<string>();
+    this.classes.forEach((cls, name) => res.push(name));
     return res;
   }
   public createClass(name: string, json: any = undefined): any {
@@ -1256,7 +1252,7 @@ export class JsonMetadata {
     }
   }
   private clearDynamicPropsCache(metaDataClass: JsonMetadataClass): void {
-    this.dynamicPropsCache = {};
+    this.dynamicPropsCache.clear();
   }
   private removePropertyFromClass(
     metaDataClass: JsonMetadataClass,
@@ -1271,7 +1267,7 @@ export class JsonMetadata {
     canBeCreated: boolean,
     result: Array<JsonMetadataClass>
   ) {
-    var children = this.childrenClasses[name];
+    var children = this.childrenClasses.get(name);
     if (!children) return;
     for (var i = 0; i < children.length; i++) {
       if (!canBeCreated || children[i].creator) {
@@ -1282,9 +1278,9 @@ export class JsonMetadata {
   }
   public findClass(name: string): JsonMetadataClass {
     name = name.toLowerCase();
-    var res = this.classes[name];
+    var res = this.classes.get(name);
     if (!res) {
-      var newName = this.alternativeNames[name];
+      var newName = this.alternativeNames.get(name);
       if (!!newName && newName != name) return this.findClass(newName);
     }
     return res;
@@ -1304,12 +1300,75 @@ export class JsonMetadata {
       if (parentClass.name === ancestorClassName) {
         return true;
       }
-      parentClass = this.classes[parentClass.parentName];
+      parentClass = this.classes.get(parentClass.parentName);
     } while(!!parentClass);
     return false;
   }
   public addAlterNativeClassName(name: string, alternativeName: string) {
-    this.alternativeNames[alternativeName.toLowerCase()] = name.toLowerCase();
+    this.alternativeNames.set(alternativeName.toLowerCase(), name.toLowerCase());
+  }
+  // MERGE(V3): the alias methods below (setAlias / getTypeByAlias / getAliasByType / removeAlias)
+  // each conflict on their doc block - master (V2) adds `@since 2.5.34`, V3 omits it (these are
+  // 3.0.0 API in V3). On merge keep the V3 (no `@since`) doc for all four.
+  /**
+   * Registers an alias for an existing element type.
+   *
+   * When deserializing JSON, the serializer treats the alias as the original type and creates the corresponding model. When serializing the model back to JSON, it writes the alias instead of the original type name. Both the original type name and its alias are accepted in input JSON.
+   *
+   * One element type can have only one alias.
+   *
+   * > [`getType()`](https://surveyjs.io/form-library/documentation/api-reference/question#getType) always returns the original type.
+   * @param type The original type, for example, `"comment"`.
+   * @param alias The alias to register for the type, for example, `"longtext"`.
+   * @see getTypeByAlias
+   * @see getAliasByType
+   * @see removeAlias
+   */
+  public setAlias(type: string, alias: string): void {
+    if (!type || !alias) return;
+    type = type.toLowerCase();
+    alias = alias.toLowerCase();
+    if (type === alias) return;
+    this.addAlterNativeClassName(type, alias); // forward: alias -> base type (findClass/createClass/getProperties)
+    this.typeAliases.set(type, alias); // reverse: base type -> alias (serialization)
+  }
+  /**
+   * Returns the original element type associated with a registered alias, or `undefined` if the specified value is not an alias.
+   * @param alias An alias registered with the [`setAlias`](#setAlias) method.
+   * @see getAliasByType
+   * @see setAlias
+   * @see removeAlias
+   */
+  public getTypeByAlias(alias: string): string {
+    if (!alias) return undefined;
+    alias = alias.toLowerCase();
+    const name = this.alternativeNames.get(alias);
+    return !!name && this.typeAliases.get(name) === alias ? name : undefined;
+  }
+  /**
+   * Returns the alias registered for the specified original element type, or `undefined` if no alias is registered.
+   * @param type The original element type.
+   * @see getTypeByAlias
+   * @see setAlias
+   * @see removeAlias
+   */
+  public getAliasByType(type: string): string {
+    if (!type) return undefined;
+    return this.typeAliases.get(type.toLowerCase());
+  }
+  /**
+   * Removes an alias registered with the [`setAlias`](#setAlias) method.
+   * @param alias The alias to remove.
+   * @see getAliasByType
+   * @see getTypeByAlias
+   */
+  public removeAlias(alias: string): void {
+    if (!alias) return;
+    alias = alias.toLowerCase();
+    const name = this.alternativeNames.get(alias);
+    if (!name || this.typeAliases.get(name) !== alias) return;
+    this.typeAliases.delete(name);
+    this.alternativeNames.delete(alias);
   }
   public generateSchema(className: string = undefined): any {
     if (!className) className = "survey";
@@ -1565,8 +1624,8 @@ export class JsonObject {
     if (obj.getType) {
       objType = obj.getType();
       properties = Serializer.getProperties(objType);
-      needAddErrors =
-        !!objType && !Serializer.isDescendantOf(objType, "itemvalue");
+      needAddErrors = !!objType && (typeof jsonObj === "object" && !Array.isArray(jsonObj)
+        || !Serializer.isDescendantOf(objType, "itemvalue"));
     }
     if (!properties) return;
     if (obj.startLoadingFromJson) {
@@ -1620,7 +1679,7 @@ export class JsonObject {
     var result = {};
     if (property != null && !property.className) {
       (<any>result)[JsonObject.typePropertyName] = property.getObjType(
-        obj.getType()
+        this.getObjSerializedType(obj)
       );
     }
     const storeDefaults = options === true;
@@ -1646,6 +1705,10 @@ export class JsonObject {
       options
     );
     return result;
+  }
+  private getObjSerializedType(obj: any): string {
+    const type = obj.getType();
+    return Serializer.getAliasByType(type) || type;
   }
   private getDynamicProperties(obj: any): Array<JsonObjectProperty> {
     return Serializer.getDynamicPropertiesByObj(obj);
@@ -1738,6 +1801,12 @@ export class JsonObject {
     this.removePos(property, value);
     if (property != null && property.hasToUseSetValue) {
       property.setValue(obj, value, this);
+      if (!!property.className && !!value && typeof value === "object" && !Array.isArray(value)) {
+        const nestedObj = obj[property.name];
+        if (!!nestedObj && !!nestedObj.getType) {
+          this.toObjectCore(value, nestedObj, options);
+        }
+      }
       return;
     }
     if (property.isArray && !Array.isArray(value) && !!value) {

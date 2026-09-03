@@ -69,8 +69,12 @@ export var traditionalChineseSurveyStrings = {
   stepError: "請輸入與步長相符的值{0}。",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "該值不應大於 {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "無效輸入",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "不允許使用數位。",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "請填寫該數值以符合所需格式。",
   // "Please enter at least {0} character(s)."
   textMinLength: "答案長度至少 {0} 個字元",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var traditionalChineseSurveyStrings = {
   urlGetChoicesError: "未能載入有效的選項或請求參數路徑有誤",
   // "The file size should not exceed {0}."
   exceedMaxSize: "文件大小不能超過 {0}",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "位元組、KB、MB、GB、TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "你最多只能上傳檔案數量{0}。",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var traditionalChineseSurveyStrings = {
   noRowsText: "沒有行。",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "行 {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // [Auto-translated] "Add new"
   addPanel: "新增",
@@ -155,8 +161,6 @@ export var traditionalChineseSurveyStrings = {
   savingDataError: "在保存結果過程中發生了錯誤，結果未能保存",
   // "The results were saved successfully!"
   savingDataSuccess: "結果保存成功!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "您的回復超過 64KB。請減小檔的大小，然後重試或聯繫調查擁有者。",
   // "Try again"
   saveAgainButton: "請重試",
   // [Auto-translated] "min"
@@ -240,7 +244,9 @@ export var traditionalChineseSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "目錄",
   // [Auto-translated] "Progress bar"
-  progressbar: "進度條"
+  progressbar: "進度條",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "頁{0}"
 };
 
 setupLocale({ localeCode: "zh-tw", strings: traditionalChineseSurveyStrings, nativeName: "繁體中文", englishName: "Tranditional Chinese" });

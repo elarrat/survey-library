@@ -1,4 +1,4 @@
-import { frameworks, url, test, expect } from "../helper";
+import { frameworks, url, test, expect, getButtonByText } from "../helper";
 
 const title = "popupSurvey";
 
@@ -56,7 +56,14 @@ const initPopupSurvey = async (page, framework, json) => {
       });
     } else if (framework === "survey-js-ui") {
       // eslint-disable-next-line surveyjs/eslint-plugin-i18n/allowed-in-shadow-dom
-      document.getElementById("surveyElement").innerHTML = "";
+      document.getElementById("surveyElement")!.innerHTML = "";
+      // eslint-disable-next-line surveyjs/eslint-plugin-i18n/allowed-in-shadow-dom
+      if (!document.querySelector("link[href*='survey-core']")) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "../../node_modules/survey-core/survey-core.min.css";
+        document.head.appendChild(link);
+      }
       // eslint-disable-next-line surveyjs/eslint-plugin-i18n/allowed-in-shadow-dom
       window["SurveyUI"].renderPopupSurvey(model, document.getElementById("surveyElement"));
     }
@@ -101,7 +108,7 @@ frameworks.forEach((framework) => {
       await expandCollapseButton.click();
       await page.locator(".sd-item__control-label", { hasText: "Nissan" }).click();
       await page.locator(".sd-item__control-label", { hasText: "Audi" }).click();
-      await page.locator("input[value=Complete]").click();
+      await getButtonByText(page, "Complete").click();
 
       const surveyResult = await page.evaluate(() => window["SurveyResult"]);
       expect(surveyResult.car).toEqual(["Nissan", "Audi"]);
@@ -167,7 +174,7 @@ frameworks.forEach((framework) => {
       await expandCollapseButton.click();
       await expect(page.locator(".sv-popup__container").filter({ visible: true })).toHaveCount(0);
 
-      await page.locator(".sd-dropdown__value").first().click();
+      await page.locator(".sd-dropdown__input").first().click();
       await expect(page.locator(".sv-popup__container").filter({ visible: true })).toHaveCount(1);
 
       await page.evaluate(() => {

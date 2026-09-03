@@ -106,7 +106,7 @@ export class QuestionImagePickerModel extends QuestionCheckboxBase {
   public supportDontKnow(): boolean { return false; }
   public isAnswerCorrect(): boolean {
     if (!this.multiSelect) return super.isAnswerCorrect();
-    return Helpers.isArrayContainsEqual(this.value, this.correctAnswer);
+    return Helpers.isArrayContainsEqual(this.value, this.getCorrectAnswerValue());
   }
   /**
    * Specifies whether users can select multiple images or videos.
@@ -444,7 +444,7 @@ export class QuestionImagePickerModel extends QuestionCheckboxBase {
     const observedElement = el && selector ? el.querySelector(selector) : undefined;
     if (!!observedElement) {
       this.reCalcGapBetweenItemsCallback = () => {
-        this.gapBetweenItems = Math.ceil(Number.parseFloat(DomDocumentHelper.getComputedStyle(observedElement).gap)) || 16;
+        this.gapBetweenItems = Math.ceil(Number.parseFloat(DomDocumentHelper.getComputedStyle(observedElement)?.gap)) || 16;
       };
       this.reCalcGapBetweenItemsCallback();
     }

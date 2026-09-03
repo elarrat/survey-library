@@ -1,5 +1,5 @@
 <template>
-  <div role="group" :class="question.cssClasses.root" ref="root">
+  <div role="group" :class="question.getControlClass()" ref="root">
     <SvComponent
       :is="'sv-button-group-item'"
       v-for="(item, index) in question.visibleChoices"
@@ -13,7 +13,7 @@
 <script lang="ts" setup>
 import SvComponent from "@/SvComponent.vue";
 import type { QuestionButtonGroupModel } from "survey-core";
-import { useQuestion } from "..";
+import { useQuestion } from "../base";
 import { ref } from "vue";
 const props = defineProps<{ question: QuestionButtonGroupModel }>();
 const root = ref<HTMLDivElement>();

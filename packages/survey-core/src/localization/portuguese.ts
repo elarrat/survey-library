@@ -69,8 +69,12 @@ export var portugueseSurveyStrings = {
   stepError: "Insira um valor que corresponda ao tamanho da etapa de {0}.",
   // "The value should not be greater than {0}"
   maxError: "O valor não deverá ser maior que {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Entrada inválida",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Números não são permitidos.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Por favor, complete o valor para corresponder ao formato exigido.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Por favor, insira pelo menos {0} caracteres.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var portugueseSurveyStrings = {
   urlGetChoicesError: "O pedido não retornou dados ou o 'caminho' do pedido não está correto",
   // "The file size should not exceed {0}."
   exceedMaxSize: "O tamanho do arquivo não deve exceder {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bytes, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "O número máximo de arquivos que você pode enviar é {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "Os arquivos não podem ser carregados. Adicione um manipulador para o evento 'onUploadFiles'.",
   // "Response required: enter another value."
@@ -127,7 +135,7 @@ export var portugueseSurveyStrings = {
   noRowsText: "Não existem linhas.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Linha {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Adicionar novo",
@@ -137,8 +145,8 @@ export var portugueseSurveyStrings = {
   showDetails: "Mostrar detalhes",
   // [Auto-translated] "Hide Details"
   hideDetails: "Ocultar detalhes",
-  // "item"
-  choices_Item: "item",
+  // [Auto-translated] "item"
+  choices_Item: "Item",
   // [Auto-translated] "Choice option"
   choices_Choice: "Opção de escolha",
   // "Column"
@@ -153,11 +161,9 @@ export var portugueseSurveyStrings = {
   savingDataError: "Ocorreu um erro e não foi possível guardar os resultados.",
   // "The results were saved successfully!"
   savingDataSuccess: "Os resultados foram guardados com sucesso!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Sua resposta excede 64 KB. Reduza o tamanho do(s) seu(s) arquivo(s) e tente novamente ou entre em contato com o proprietário da pesquisa.",
   // "Try again"
   saveAgainButton: "Tente novamente",
-  // "min"
+  // [Auto-translated] "min"
   timerMin: "min",
   // "sec"
   timerSec: "seg",
@@ -238,7 +244,27 @@ export var portugueseSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Índice",
   // [Auto-translated] "Progress bar"
-  progressbar: "Barra de progresso"
+  progressbar: "Barra de progresso",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Página {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "d",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "m",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "a",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "h",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "H",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "M",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "t",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "T"
 };
 
 setupLocale({ localeCode: "pt", strings: portugueseSurveyStrings, nativeName: "português", englishName: "Portuguese" });

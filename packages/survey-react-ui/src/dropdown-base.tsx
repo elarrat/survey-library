@@ -41,13 +41,17 @@ export class SurveyQuestionDropdownBase<T extends Question> extends SurveyQuesti
     return this.questionBase.renderedValue;
   }
   protected renderReadOnlyElement(): React.JSX.Element | null {
+    if (this.question.showInputFieldComponent) {
+      return (<div className={this.question.cssClasses.controlValue}>
+        {this.renderValueElement()}
+      </div>);
+    }
     if (this.question.readOnlyText) {
       return (<div className={this.question.cssClasses.controlValue}>
         {this.renderLocString(this.question.locReadOnlyText)}
       </div>);
-    } else {
-      return null;
     }
+    return null;
   }
   protected renderSelect(cssClasses: any): React.JSX.Element {
     let selectElement: React.JSX.Element | null = null;
@@ -85,7 +89,9 @@ export class SurveyQuestionDropdownBase<T extends Question> extends SurveyQuesti
 
   renderValueElement(): React.JSX.Element | null {
     if (this.question.showInputFieldComponent) {
-      return ReactElementFactory.Instance.createElement(this.question.inputFieldComponentName, { item: this.dropdownListModel.getSelectedAction(), question: this.question });
+      const listModel = this.dropdownListModel;
+      const actionItem = !!listModel ? listModel.getSelectedAction() : this.question.selectedItem;
+      return ReactElementFactory.Instance.createElement(this.question.inputFieldComponentName, { item: actionItem, question: this.question });
     } else if (this.question.showSelectedItemLocText) {
       return this.renderLocString(this.question.selectedItemLocText);
     }
@@ -119,18 +125,20 @@ export class SurveyQuestionDropdownBase<T extends Question> extends SurveyQuesti
       aria-activedescendant={dropdownListModel.ariaQuestionActivedescendant}
       ref={(div) => (this.setControl(div))}
     >
-      {dropdownListModel.showHintPrefix ?
-        (<div className={this.question.cssClasses.hintPrefix}>
-          <span>{dropdownListModel.hintStringPrefix}</span>
-        </div>) : null}
       <div className={this.question.cssClasses.controlValue}>
-        {dropdownListModel.showHintString ?
-          (<div className={this.question.cssClasses.hintSuffix}>
-            <span style={{ visibility: "hidden" }} data-bind="text: model.filterString">{dropdownListModel.inputStringRendered}</span>
-            <span>{dropdownListModel.hintStringSuffix}</span>
+        {dropdownListModel.showHintPrefix ?
+          (<div className={this.question.cssClasses.hintPrefix}>
+            <span>{dropdownListModel.hintStringPrefix}</span>
           </div>) : null}
-        {valueElement}
-        {dropdownListModel.needRenderInput ? this.renderFilterInput() : null}
+        <div className={this.question.cssClasses.inputPrefixWrapper}>
+          {dropdownListModel.showHintString ?
+            (<div className={this.question.cssClasses.hintSuffix}>
+              <span style={{ visibility: "hidden" }} data-bind="text: model.filterString">{dropdownListModel.inputStringRendered}</span>
+              <span>{dropdownListModel.hintStringSuffix}</span>
+            </div>) : null}
+          {valueElement}
+          {dropdownListModel.needRenderInput ? this.renderFilterInput() : null}
+        </div>
       </div>
       {this.renderEditorButtons()}
     </div>);

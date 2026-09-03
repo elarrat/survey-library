@@ -69,8 +69,12 @@ export var spanishSurveyStrings = {
   stepError: "Introduzca un valor que coincida con el tamaño del paso de {0}.",
   // "The value should not be greater than {0}"
   maxError: "La estimación no debe ser mayor que {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Entrada inválida",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "No se permiten números.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Por favor, completa el valor para que coincida con el formato requerido.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Por favor entre por lo menos {0} símbolos.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var spanishSurveyStrings = {
   urlGetChoicesError: "La solicitud regresó vacío de data o la propiedad 'trayectoria' no es correcta",
   // "The file size should not exceed {0}."
   exceedMaxSize: "El tamaño del archivo no debe de exceder {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bytes, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "El número máximo de archivos que puedes subir es {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "Los archivos no se pueden cargar. Agregue un controlador para el evento 'onUploadFiles'.",
   // "Response required: enter another value."
@@ -127,7 +135,7 @@ export var spanishSurveyStrings = {
   noRowsText: "No hay hileras.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Fila {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Añadir nuevo",
@@ -153,14 +161,12 @@ export var spanishSurveyStrings = {
   savingDataError: "Los resultados se están guardando en el servidor...",
   // "The results were saved successfully!"
   savingDataSuccess: "¡Los resultados se guardaron con éxito!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Su respuesta supera los 64 KB. Reduzca el tamaño de su(s) archivo(s) e inténtelo de nuevo o póngase en contacto con el propietario de la encuesta.",
   // "Try again"
   saveAgainButton: "Inténtalo de nuevo.",
-  // "min"
+  // [Auto-translated] "min"
   timerMin: "min",
-  // "sec"
-  timerSec: "sec",
+  // [Auto-translated] "sec"
+  timerSec: "SEC",
   // "You have spent {0} on this page and {1} in total."
   timerSpentAll: "Has gastado {0} en esta página y {1} en total.",
   // "You have spent {0} on this page."
@@ -195,7 +201,7 @@ export var spanishSurveyStrings = {
   removeFileCaption: "Elimina este archivo",
   // "Yes"
   booleanCheckedLabel: "Sí",
-  // "No"
+  // [Auto-translated] "No"
   booleanUncheckedLabel: "No",
   // "Are you sure that you want to remove this file: {0}?"
   confirmRemoveFile: "¿Estás seguro de que quieres eliminar este archivo: {0}?",
@@ -238,7 +244,27 @@ export var spanishSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Tabla de contenidos",
   // [Auto-translated] "Progress bar"
-  progressbar: "Barra de progreso"
+  progressbar: "Barra de progreso",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Página {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "d",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "m",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "a",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "h",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "H",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "M",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "t",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "T"
 };
 
 setupLocale({ localeCode: "es", strings: spanishSurveyStrings, nativeName: "español", englishName: "Spanish" });

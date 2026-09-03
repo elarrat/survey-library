@@ -73,7 +73,7 @@ export class QuestionMatrixBaseModel<TRow, TColumn> extends Question {
    * [Single-Select Matrix Demo](https://surveyjs.io/form-library/examples/single-selection-matrix-table-question/ (linkStyle))
    *
    * [Multi-Select Matrix Demo](https://surveyjs.io/form-library/examples/multi-select-matrix-question/ (linkStyle))
-+   */
+   */
   @property() rows: Array<any>;
   protected getVisibleRows(): Array<TRow> {
     return [];
@@ -182,7 +182,6 @@ export class QuestionMatrixBaseModel<TRow, TColumn> extends Question {
       .append(this.cssClasses.root)
       .append(this.cssClasses.columnsAutoWidth, this.columnsAutoWidth)
       .append(this.cssClasses.noHeader, !this.showHeader)
-      .append(this.cssClasses.hasFooter, !!this.renderedTable?.showAddRowOnBottom)
       .append(this.cssClasses.rootAlternateRows, this.alternateRows)
       .append(this.cssClasses.rootVerticalAlignTop, (this.verticalAlign === "top"))
       .append(this.cssClasses.rootVerticalAlignMiddle, (this.verticalAlign === "middle")).toString();
@@ -247,6 +246,9 @@ export class QuestionMatrixBaseModel<TRow, TColumn> extends Question {
   protected getIsMobile(): boolean {
     if (this.displayMode == "auto") return super.getIsMobile();
     return this.displayMode === "list";
+  }
+  public get isAllowTitleLeft(): boolean {
+    return false;
   }
 }
 

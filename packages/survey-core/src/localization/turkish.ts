@@ -33,7 +33,7 @@ export var turkishSurveyStrings = {
   indexText: "{0}/{1}",
   // "{0} of {1}"
   panelDynamicProgressText: "{0}/{1}",
-  // "Panel {panelIndex}"
+  // [Auto-translated] "Panel {panelIndex}"
   panelDynamicTabTextFormat: "Panel {panelIndex}",
   // "Answered {0}/{1} questions"
   questionsProgressText: "{0}/{1} soru yanıtlandı",
@@ -69,8 +69,12 @@ export var turkishSurveyStrings = {
   stepError: "Lütfen {0} adım boyutuyla eşleşen bir değer girin.",
   // "The value should not be greater than {0}"
   maxError: "Değer {0}'dan büyük olmamalıdır",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Geçersiz girdi",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Numaralara izin verilmez.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Lütfen gerekli formata uygun değeri tamamlayın.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Lütfen en az {0} karakter girin.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var turkishSurveyStrings = {
   urlGetChoicesError: "İstek boş veri döndürdü veya 'path' özelliği yanlış",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Dosya boyutu {0} değerini geçemez.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Baytlar, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "Yükleyebileceğiniz maksimum dosya sayısı {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "Dosyalar yüklenemiyor. Lütfen 'onUploadFiles' olayı için bir işleyici ekleyin.",
   // "Response required: enter another value."
@@ -127,7 +135,7 @@ export var turkishSurveyStrings = {
   noRowsText: "Satır yok.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Satır {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Yeni ekle",
@@ -153,8 +161,6 @@ export var turkishSurveyStrings = {
   savingDataError: "Bir hata oluştu ve sonuçlar kaydedilemedi.",
   // "The results were saved successfully!"
   savingDataSuccess: "Sonuçlar başarıyla kaydedildi!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Yanıtınız 64 KB'ı aşıyor. Lütfen dosyalarınızın boyutunu küçültün ve tekrar deneyin veya anket sahibiyle iletişime geçin.",
   // "Try again"
   saveAgainButton: "Tekrar deneyin",
   // "min"
@@ -238,7 +244,27 @@ export var turkishSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "İçindekiler",
   // [Auto-translated] "Progress bar"
-  progressbar: "İlerleme çubuğu"
+  progressbar: "İlerleme çubuğu",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Sayfa {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "g",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "a",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "y",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "s",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "S",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "d",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "t",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "T"
 };
 
 setupLocale({ localeCode: "tr", strings: turkishSurveyStrings, nativeName: "türkçe", englishName: "Turkish" });

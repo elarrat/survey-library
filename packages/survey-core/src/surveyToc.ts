@@ -1,18 +1,35 @@
 import { Action, IAction } from "./actions/action";
 import { ComputedUpdater } from "./base";
 import { DomDocumentHelper } from "./global_variables_utils";
-import { IListModel, ListModel } from "./list";
+import { ListModel } from "./list";
+import { IListModel } from "./actions/list-model";
 import { PageModel } from "./page";
 import { PanelModelBase } from "./panel";
 import { PopupModel } from "./popup";
 import { Question } from "./question";
 import { SurveyModel } from "./survey";
 import { getLocaleString } from "./surveyStrings";
+import type { ILayoutElementModel, ISurveyLayoutElement, LayoutElementContainer } from "./base-interfaces";
 
 export function tryFocusPage(survey: SurveyModel, panel: PanelModelBase): boolean {
   if (survey.isDesignMode) return true;
+  const firstQuestion = panel.getFirstQuestionToFocus(false, true);
+  expandAllParentPanels(firstQuestion);
   panel.focusFirstQuestion();
   return true;
+}
+
+function expandAllParentPanels(question: Question): void {
+  let parent = question && question.parent;
+  while(parent && parent.getType() !== "page") {
+    if (parent.isPanel) {
+      const panel = parent as PanelModelBase;
+      if (panel.isCollapsed) {
+        panel.expand();
+      }
+    }
+    parent = parent.parent;
+  }
 }
 
 function getPage(question: Question): PageModel {
@@ -41,6 +58,15 @@ export function createTOCListModel(survey: SurveyModel, onAction?: () => void): 
   };
   var listModel = new ListModel(listOptions as any);
   listModel.allowSelection = false;
+  if (survey.tocItemComponent) {
+    listModel.itemComponent = survey.tocItemComponent;
+  }
+  const updateTocItemComponent = () => {
+    if (survey.tocItemComponent) {
+      listModel.itemComponent = survey.tocItemComponent;
+    }
+  };
+  survey.registerFunctionOnPropertyValueChanged("tocItemComponent", updateTocItemComponent, "toc");
   const updateSelectedItem = (currentPage: PageModel, defaultSelection?: IAction) => {
     listModel.selectedItem = !!currentPage && listModel.actions.filter(i => i.id === currentPage.name)[0] || defaultSelection;
   };
@@ -65,6 +91,7 @@ function getTOCItems(survey: SurveyModel, onAction: () => void) {
     return new Action({
       id: page.name,
       locTitle: page.locNavigationTitle,
+      data: { page: page, survey: survey },
       action: () => {
         DomDocumentHelper.activeElementBlur();
         !!onAction && onAction();
@@ -94,7 +121,7 @@ export function getTocRootCss(survey: SurveyModel, isMobile = false): string {
   return rootCss;
 }
 
-export class TOCModel {
+export class TOCModel implements ILayoutElementModel {
   public static RootStyle = "sv_progress-toc";
   public static StickyPosition = true;
   constructor(public survey: SurveyModel) {
@@ -107,6 +134,24 @@ export class TOCModel {
       survey.onAfterRenderSurvey.add((s, o) => this.initStickyTOCSubscriptions(o.htmlElement));
       this.initStickyTOCSubscriptions(survey.rootElement);
     }
+  }
+
+  public createLayoutElements(): Array<ISurveyLayoutElement> {
+    const layoutElement: ISurveyLayoutElement = {
+      id: "toc-navigation",
+      component: "sv-navigation-toc",
+      getData: () => this,
+      processResponsiveness: () => this.updateStickyTOCSize(this.survey.rootElement),
+      isInContainer: (container: LayoutElementContainer) => this.isTocNavigationInContainer(container)
+    };
+    return [layoutElement];
+  }
+
+  private isTocNavigationInContainer(container: LayoutElementContainer): boolean {
+    if (this.survey.state !== "running" || !this.survey.showTOC) return false;
+    if (container === "left") return ["left", "both"].indexOf(this.survey.tocLocation) !== -1;
+    if (container === "right") return ["right", "both"].indexOf(this.survey.tocLocation) !== -1;
+    return false;
   }
 
   private initStickyTOCSubscriptions(rootElement: HTMLElement) {
@@ -132,7 +177,7 @@ export class TOCModel {
         let isBelowHeader = !advHeader || advHeader.hasBackground;
         const titleSelector = this.survey.headerView === "advanced" ? ".sv-header" : ".sv_custom_header+div div." + (this.survey.css.title || "sd-title");
         const titleElement = rootElement.querySelector(titleSelector) as HTMLDivElement;
-        const titleElementHeight = titleElement && isBelowHeader ? titleElement.getBoundingClientRect().height : 0;
+        const titleElementHeight = (this.survey.hasTitle || this.survey.hasLogo) && !!titleElement && isBelowHeader ? titleElement.getBoundingClientRect().height : 0;
         const scrollElement = rootElement.querySelector(".sv-scroll__scroller") as HTMLDivElement || rootElement;
         const scrollCompensationHeight = scrollElement.scrollTop > titleElementHeight ? 0 : titleElementHeight - scrollElement.scrollTop;
         tocRootElement.style.height = (rootHeight - scrollCompensationHeight - 1) + "px";
@@ -154,6 +199,7 @@ export class TOCModel {
   };
   public dispose(): void {
     this.survey.unRegisterFunctionOnPropertyValueChanged("_isMobile", "toc");
+    this.survey.unRegisterFunctionOnPropertyValueChanged("tocItemComponent", "toc");
     const [handler] = this.survey.unRegisterFunctionOnPropertyValueChanged("pages", "toc");
     this.survey.onEndLoadingFromJson.remove(handler);
     this.survey.onPageAdded.remove(handler);

@@ -11,7 +11,51 @@ import { Base } from "./base";
 
 function createSVGElement(name: string): SVGElement {
   const document = DomDocumentHelper.getDocument();
+  if (!document) return null;
   return document.createElementNS("http://www.w3.org/2000/svg", name);
+}
+
+interface IImageMapColors {
+  idleFillColor: string;
+  idleStrokeColor: string;
+  idleStrokeWidth: number;
+  hoverFillColor: string;
+  hoverStrokeColor: string;
+  hoverStrokeWidth: number;
+  selectedFillColor: string;
+  selectedStrokeColor: string;
+  selectedStrokeWidth: number;
+}
+
+function buildImageMapCssVariables(colors: IImageMapColors): { [index: string]: string } {
+  const variables: { [index: string]: any } = {
+    "--sd-imagemap-idle-fill-color": colors.idleFillColor,
+    "--sd-imagemap-idle-stroke-color": colors.idleStrokeColor,
+    "--sd-imagemap-idle-stroke-width": colors.idleStrokeWidth,
+    "--sd-imagemap-hover-fill-color": colors.hoverFillColor,
+    "--sd-imagemap-hover-stroke-color": colors.hoverStrokeColor,
+    "--sd-imagemap-hover-stroke-width": colors.hoverStrokeWidth,
+    "--sd-imagemap-selected-fill-color": colors.selectedFillColor,
+    "--sd-imagemap-selected-stroke-color": colors.selectedStrokeColor,
+    "--sd-imagemap-selected-stroke-width": colors.selectedStrokeWidth,
+  };
+
+  const result: { [index: string]: string } = {};
+  Object.keys(variables).forEach((key) => {
+    if (variables[key] !== undefined && variables[key] !== null) {
+      result[key] = "" + variables[key];
+    }
+  });
+  return result;
+}
+
+// Applied through CSSOM rather than setAttribute("style", ...): a style attribute is
+// refused under a strict `style-src` CSP unless 'unsafe-hashes' is allowed.
+function applyImageMapCssVariables(svg: SVGElement, variables: { [index: string]: string }): void {
+  const style = (<any>svg).style as CSSStyleDeclaration;
+  if (!style) return;
+  svg.removeAttribute("style");
+  Object.keys(variables).forEach((key) => style.setProperty(key, variables[key]));
 }
 
 export class QuestionImageMapModel extends Question {
@@ -26,7 +70,7 @@ export class QuestionImageMapModel extends Question {
 
   @property() imageLink: string;
   @property() areas: ImageMapArea[];
-  @property() hoveredUID: number;
+  @property() hoveredUID: string;
   @property() valuePropertyName: string;
 
   @property({ defaultValue: true }) multiSelect: boolean;
@@ -179,7 +223,7 @@ export class QuestionImageMapModel extends Question {
     }
     const uid = (event.target as HTMLElement).dataset["uid"];
     if (!uid) return;
-    const item = this.areas.find(i => i.uniqueId === Number(uid));
+    const item = this.areas.find(i => i.renderedId === uid);
     this.mapItemToggle(item);
   };
 
@@ -187,7 +231,7 @@ export class QuestionImageMapModel extends Question {
     if (this.isInDesignMode && this.selectedArea) return;
     const uid = (event.target as HTMLElement).dataset["uid"];
     if (!uid) return;
-    this.hoveredUID = Number(uid);
+    this.hoveredUID = uid;
   };
 
   onMouseOutHandler = () => {
@@ -251,26 +295,12 @@ export class QuestionImageMapModel extends Question {
     return [x / scale, y / scale];
   }
 
+  public getCSSVariablesMap(): { [index: string]: string } {
+    return buildImageMapCssVariables(this);
+  }
+
   public getCSSVariables(): string {
-
-    const variables = {
-      "--sd-imagemap-idle-fill-color": this.idleFillColor,
-      "--sd-imagemap-idle-stroke-color": this.idleStrokeColor,
-      "--sd-imagemap-idle-stroke-width": this.idleStrokeWidth,
-      "--sd-imagemap-hover-fill-color": this.hoverFillColor,
-      "--sd-imagemap-hover-stroke-color": this.hoverStrokeColor,
-      "--sd-imagemap-hover-stroke-width": this.hoverStrokeWidth,
-      "--sd-imagemap-selected-fill-color": this.selectedFillColor,
-      "--sd-imagemap-selected-stroke-color": this.selectedStrokeColor,
-      "--sd-imagemap-selected-stroke-width": this.selectedStrokeWidth,
-    };
-
-    for (const key in variables) {
-      if (variables[key] == undefined || variables[key] === null) {
-        delete variables[key];
-      }
-    }
-
+    const variables = this.getCSSVariablesMap();
     return Object.keys(variables).map((key) => `${key}: ${variables[key]}`).join("; ");
   }
 
@@ -278,9 +308,7 @@ export class QuestionImageMapModel extends Question {
 
     if (!this.svg) return;
 
-    const variables = this.getCSSVariables();
-    if (!variables.length)this.svg.removeAttribute("style");
-    else this.svg.setAttribute("style", variables);
+    applyImageMapCssVariables(this.svg, this.getCSSVariablesMap());
   }
 
   public dispose(): void {
@@ -368,9 +396,9 @@ export class QuestionImageMapModel extends Question {
 
   public isItemHovered(item: ImageMapArea): boolean {
     if (!this.hoveredUID) return false;
-    const hoveredItem = this.areas.find(i => i.uniqueId === this.hoveredUID);
+    const hoveredItem = this.areas.find(i => i.renderedId === this.hoveredUID);
     if (!hoveredItem) return false;
-    return this.isInDesignMode ? item.uniqueId === this.hoveredUID : item.value === hoveredItem.value;
+    return this.isInDesignMode ? item.renderedId === this.hoveredUID : item.value === hoveredItem.value;
   }
 
   public addItem(value: any): ImageMapArea {
@@ -623,9 +651,10 @@ export class ImageMapArea extends ItemValue {
     }
 
     const document = DomDocumentHelper.getDocument();
+    if (!document) return;
 
     const el = document.createElementNS("http://www.w3.org/2000/svg", shape === "poly" ? "polygon" : shape);
-    el.dataset["uid"] = this.uniqueId.toString();
+    el.dataset["uid"] = this.renderedId;
     this.svg = el;
 
     this.draw();
@@ -633,26 +662,12 @@ export class ImageMapArea extends ItemValue {
     return this.svg;
   }
 
+  public getCSSVariablesMap(): { [index: string]: string } {
+    return buildImageMapCssVariables(this);
+  }
+
   public getCSSVariables(): string {
-
-    const variables = {
-      "--sd-imagemap-idle-fill-color": this.idleFillColor,
-      "--sd-imagemap-idle-stroke-color": this.idleStrokeColor,
-      "--sd-imagemap-idle-stroke-width": this.idleStrokeWidth,
-      "--sd-imagemap-hover-fill-color": this.hoverFillColor,
-      "--sd-imagemap-hover-stroke-color": this.hoverStrokeColor,
-      "--sd-imagemap-hover-stroke-width": this.hoverStrokeWidth,
-      "--sd-imagemap-selected-fill-color": this.selectedFillColor,
-      "--sd-imagemap-selected-stroke-color": this.selectedStrokeColor,
-      "--sd-imagemap-selected-stroke-width": this.selectedStrokeWidth,
-    };
-
-    for (const key in variables) {
-      if (variables[key] == undefined || variables[key] === null) {
-        delete variables[key];
-      }
-    }
-
+    const variables = this.getCSSVariablesMap();
     return Object.keys(variables).map((key) => `${key}: ${variables[key]}`).join("; ");
   }
 
@@ -679,9 +694,7 @@ export class ImageMapArea extends ItemValue {
 
     if (!this.svg) return;
 
-    const variables = this.getCSSVariables();
-    if (!variables.length)this.svg.removeAttribute("style");
-    else this.svg.setAttribute("style", variables);
+    applyImageMapCssVariables(this.svg, this.getCSSVariablesMap());
   }
 
   public updateCSSClasses(): void {

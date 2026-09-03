@@ -20,10 +20,6 @@ export interface ILocalizableString {
   getLocales(): Array<string>;
   getIsMultiple(): boolean;
 }
-/**
- * The class represents the string that supports multi-languages and markdown.
- * It uses in all objects where support for multi-languages and markdown is required.
- */
 export class LocalizableString implements ILocalizableString {
   public static SerializeAsObject: boolean = false;
   public static get defaultLocale(): string {
@@ -229,7 +225,7 @@ export class LocalizableString implements ILocalizableString {
     }
     if (!settings.localization.storeDuplicatedTranslations &&
       !this.isValueEmpty(value) && loc && loc != this.defaultLoc &&
-      !this.getValue(loc) &&
+      this.getValue(loc) === undefined &&
       value == this.getLocaleText(this.defaultLoc)
     )
       return;
@@ -242,7 +238,7 @@ export class LocalizableString implements ILocalizableString {
     } else {
       if (typeof value === "string") {
         if (this.canRemoveLocValue(loc, value)) {
-          this.setLocaleText(loc, null);
+          this.deleteValue(loc);
         } else {
           this.setValue(loc, value);
           if (loc == this.defaultLoc) {
@@ -472,9 +468,6 @@ export class LocalizableString implements ILocalizableString {
     return settings.localization.defaultLocaleName;
   }
 }
-/**
- * The class represents the list of strings that supports multi-languages.
- */
 export class LocalizableStrings implements ILocalizableString {
   private values: any = {};
   public onValueChanged: (oldValue: any, newValue: any) => void;

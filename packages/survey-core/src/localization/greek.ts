@@ -69,8 +69,12 @@ export var greekSurveyStrings = {
   stepError: "Εισαγάγετε μια τιμή που ταιριάζει με το μέγεθος του βήματος του {0}.",
   // "The value should not be greater than {0}"
   maxError: "Η τιμή δεν πρέπει να είναι μεγαλύτερη από {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Μη έγκυρη εισαγωγή",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Οι αριθμοί δεν επιτρέπονται.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Συμπληρώστε την τιμή για να ταιριάζει με την απαιτούμενη μορφή.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Παρακαλώ συμπληρώστε τουλάχιστον {0} χαρακτήρες.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var greekSurveyStrings = {
   urlGetChoicesError: "Η αίτηση επέστρεψε κενά δεδομένα ή η ιδιότητα 'μονοπάτι/path' είναι εσφαλμένη",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Το μέγεθος του αρχείου δεν μπορεί να υπερβαίνει τα {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Byte, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "Ο μέγιστος αριθμός αρχείων που μπορείτε να ανεβάσετε είναι {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "Δεν είναι δυνατή η αποστολή αρχείων. Προσθέστε ένα πρόγραμμα χειρισμού για το συμβάν 'onUploadFiles'.",
   // "Response required: enter another value."
@@ -127,8 +135,8 @@ export var greekSurveyStrings = {
   noRowsText: "Δεν υπάρχουν εγγραφές.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Γραμμή {rowIndex}",
-  // "{rowTitle}"
-  rowNameTemplateTitle: "{rowTitle}",
+  // [Auto-translated] "{rowTitle}"
+  rowNameTemplateTitle: "{σειράΤίτλος}",
   // "Add new"
   addPanel: "Προσθέστε νέο",
   // "Remove"
@@ -153,8 +161,6 @@ export var greekSurveyStrings = {
   savingDataError: "Παρουσιάστηκε σφάλμα και δεν ήταν δυνατή η αποθήκευση των αποτελεσμάτων.",
   // "The results were saved successfully!"
   savingDataSuccess: "Τα αποτελέσματα αποθηκεύτηκαν με επιτυχία!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Η απάντησή σας υπερβαίνει τα 64KB. Μειώστε το μέγεθος των αρχείων σας και προσπαθήστε ξανά ή επικοινωνήστε με τον κάτοχο της έρευνας.",
   // "Try again"
   saveAgainButton: "Προσπάθησε ξανά",
   // "min"
@@ -238,7 +244,9 @@ export var greekSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Πίνακας περιεχομένων",
   // [Auto-translated] "Progress bar"
-  progressbar: "Γραμμή προόδου"
+  progressbar: "Γραμμή προόδου",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Σελίδα {0}"
 };
 
 setupLocale({ localeCode: "el", strings: greekSurveyStrings, nativeName: "ελληνικά", englishName: "Greek" });

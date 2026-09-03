@@ -12,48 +12,35 @@ import { DropdownListModel } from "./dropdownListModel";
 import { SurveyModel } from "./survey";
 import { ISurveyImpl } from "./base-interfaces";
 import { IsTouch } from "./utils/devices";
+import { getColorFromProperty } from "./utils/utils";
+import { getRGBaColor } from "./utils/color";
 import { ITheme } from "./themes";
 import { DomDocumentHelper } from "./global_variables_utils";
 import { HashTable } from "./helpers";
 import { Base } from "./base";
 
-function getColorFromProperty(varName: string) {
-  if ("function" === typeof getComputedStyle) {
-    const style = getComputedStyle(DomDocumentHelper.getDocumentElement());
-    return style.getPropertyValue && style.getPropertyValue(varName);
-  }
-  return "";
-}
+const RGBA_BLACK = "rgba(0, 0, 0, 1)";
 
-function getRGBColor(themeVariables: any, colorName: string, varName: string) {
+function getRGBColor(themeVariables: any, colorName: string, varName: string, rootElement: HTMLElement): number[] | null {
   let str: string = !!themeVariables && themeVariables[colorName] as any;
-  if (!str) str = getColorFromProperty(varName);
+  const fallback = getColorFromProperty(varName, rootElement);
+  if (!str) str = fallback;
   if (!str) return null;
-  const canvasElement = DomDocumentHelper.createElement("canvas") as HTMLCanvasElement;
-  if (!canvasElement) return null;
-  var ctx = canvasElement.getContext("2d");
-  ctx.fillStyle = str;
 
-  if (ctx.fillStyle == "#000000") {
-    ctx.fillStyle = getColorFromProperty(varName);
+  let rgbaStr = getRGBaColor(str);
+  if (rgbaStr === RGBA_BLACK && fallback) {
+    const second = getRGBaColor(fallback);
+    if (second) rgbaStr = second;
   }
-  const newStr = ctx.fillStyle;
 
-  if (newStr.startsWith("rgba")) {
-    return newStr.substring(5, newStr.length - 1).split(",").map(c => +(c.trim()));
-  }
-  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(newStr);
-  return result ? [
-    parseInt(result[1], 16),
-    parseInt(result[2], 16),
-    parseInt(result[3], 16),
-    1
-  ] : null;
+  if (!rgbaStr || !rgbaStr.startsWith("rgba")) return null;
+  return rgbaStr.substring(5, rgbaStr.length - 1).split(",").map(c => +(c.trim()));
 }
 interface IRatingItemOwner extends ILocalizableOwner {
   getItemStyle(item: RatingItem): any;
   getItemClass(item: RatingItem): string;
   getDescription(item: RatingItem): LocalizableString;
+  getLocTextForItem(item: RatingItem): LocalizableString;
 }
 
 export class RatingItem extends ItemValue {
@@ -93,7 +80,7 @@ export class RatingItem extends ItemValue {
   }
 
   public getLocText(): LocalizableString {
-    return this.description || super.getLocText();
+    return this.ratingOwner?.getLocTextForItem(this) || super.getLocText();
   }
 }
 
@@ -325,12 +312,12 @@ export class QuestionRatingModel extends Question implements IRatingItemOwner {
     if (!DomDocumentHelper.isAvailable()) return;
     if (QuestionRatingModel.colorsCalculated) return;
 
-    QuestionRatingModel.badColor = getRGBColor(themeVariables, "--sjs-special-red", "--sd-rating-bad-color");
-    QuestionRatingModel.normalColor = getRGBColor(themeVariables, "--sjs-special-yellow", "--sd-rating-normal-color");
-    QuestionRatingModel.goodColor = getRGBColor(themeVariables, "--sjs-special-green", "--sd-rating-good-color");
-    QuestionRatingModel.badColorLight = getRGBColor(themeVariables, "--sjs-special-red-light", "--sd-rating-bad-color-light");
-    QuestionRatingModel.normalColorLight = getRGBColor(themeVariables, "--sjs-special-yellow-light", "--sd-rating-normal-color-light");
-    QuestionRatingModel.goodColorLight = getRGBColor(themeVariables, "--sjs-special-green-light", "--sd-rating-good-color-light");
+    QuestionRatingModel.badColor = getRGBColor(themeVariables, "--sjs2-color-bg-alert-primary", "--sd-rating-bad-color", this.rootElement);
+    QuestionRatingModel.normalColor = getRGBColor(themeVariables, "--sjs2-color-bg-warning-primary", "--sd-rating-normal-color", this.rootElement);
+    QuestionRatingModel.goodColor = getRGBColor(themeVariables, "--sjs2-color-bg-positive-primary", "--sd-rating-good-color", this.rootElement);
+    QuestionRatingModel.badColorLight = getRGBColor(themeVariables, "--sjs2-color-bg-alert-secondary", "--sd-rating-bad-color-light", this.rootElement);
+    QuestionRatingModel.normalColorLight = getRGBColor(themeVariables, "--sjs2-color-bg-warning-secondary", "--sd-rating-normal-color-light", this.rootElement);
+    QuestionRatingModel.goodColorLight = getRGBColor(themeVariables, "--sjs2-color-bg-positive-secondary", "--sd-rating-good-color-light", this.rootElement);
 
     this.colorsCalculated = true;
     this.resetRenderedItems();
@@ -396,15 +383,21 @@ export class QuestionRatingModel extends Question implements IRatingItemOwner {
   }
 
   public getDescription(e: RatingItem): LocalizableString {
+    if (this.isLoadingFromJson || !this.isDropdown) return undefined;
+    return this.getExtremeDescription(e);
+  }
 
-    if (this.isLoadingFromJson) return undefined;
-    if (!this.displayRateDescriptionsAsExtremeItems && !this.isDropdown) return undefined;
+  private getExtremeDescription(e: RatingItem): LocalizableString {
     const rateValues = this.visibleChoices;
     const idx = rateValues.indexOf(e);
     if (idx == 0) return this.minRateDescription && this.locMinRateDescription;
     if (idx == rateValues.length - 1) return this.maxRateDescription && this.locMaxRateDescription;
-
     return undefined;
+  }
+
+  public getLocTextForItem(e: RatingItem): LocalizableString {
+    if (this.isLoadingFromJson || this.isDropdown || !this.displayRateDescriptionsAsExtremeItems) return undefined;
+    return this.getExtremeDescription(e);
   }
 
   private resetRenderedItems() {
@@ -417,6 +410,7 @@ export class QuestionRatingModel extends Question implements IRatingItemOwner {
 
   /**
    * @deprecated Use `visibleChoices` instead.
+   * @hidden
    */
   public get renderedRateItems(): RatingItem[] {
     return this.visibleChoices;
@@ -472,9 +466,6 @@ export class QuestionRatingModel extends Question implements IRatingItemOwner {
   }
   public getInputId(index: number): string {
     return this.inputId + "_" + index;
-  }
-  public get questionName() {
-    return this.name + "_" + this.id;
   }
   supportAutoAdvance(): boolean {
     return this.isMouseDown === true || this.isDropdown;
@@ -721,6 +712,17 @@ export class QuestionRatingModel extends Question implements IRatingItemOwner {
   public getItemSmileyIconName(item: ItemValue) {
     return "icon-" + this.getItemSmiley(item);
   }
+
+  public afterRenderQuestionElement(el: HTMLElement): void {
+    super.afterRenderQuestionElement(el);
+    this.rootElement = el;
+    if (this.renderAs !== "dropdown") {
+      this.colorsCalculated = false;
+      this.updateColors((this.survey as SurveyModel).themeVariables);
+    }
+  }
+
+  private rootElement: HTMLElement;
 
   private getRenderedItemColor(index: number, light: boolean): string {
     let startColor = light ? QuestionRatingModel.badColorLight : QuestionRatingModel.badColor;

@@ -69,8 +69,12 @@ export var swedishSurveyStrings = {
   stepError: "Ange ett värde som matchar stegstorleken för {0}.",
   // "The value should not be greater than {0}"
   maxError: "Värdet får inte vara större än {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Ogiltig indata",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Nummer är inte tillåtna.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Vänligen fyll i värdet för att matcha det önskade formatet.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Ange minst {0} tecken.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var swedishSurveyStrings = {
   urlGetChoicesError: "Antingen returnerade förfrågan ingen data eller så är egenskapen 'path' inte korrekt",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Filstorleken får ej överstiga {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bytes, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "Det maximala antalet filer du kan ladda upp är {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var swedishSurveyStrings = {
   noRowsText: "Det finns inga rader.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Rad {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Lägg till ny",
@@ -147,20 +153,18 @@ export var swedishSurveyStrings = {
   matrix_column: "Kolumn",
   // "Row"
   matrix_row: "Rad",
-  // "text"
-  multipletext_itemname: "text",
+  // [Auto-translated] "text"
+  multipletext_itemname: "Text",
   // "The results are being saved on the server..."
   savingData: "Resultaten sparas på servern ...",
   // "An error occurred and we could not save the results."
   savingDataError: "Ett fel inträffade och vi kunde inte spara resultaten.",
   // "The results were saved successfully!"
   savingDataSuccess: "Resultaten lyckades sparas!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Ditt svar överstiger 64 kB. Minska storleken på dina filer och försök igen eller kontakta undersökningens ägare.",
   // "Try again"
   saveAgainButton: "Försök igen",
-  // "min"
-  timerMin: "min",
+  // [Auto-translated] "min"
+  timerMin: "Min",
   // "sec"
   timerSec: "sek",
   // "You have spent {0} on this page and {1} in total."
@@ -240,7 +244,27 @@ export var swedishSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Innehållsförteckning",
   // [Auto-translated] "Progress bar"
-  progressbar: "Förloppsindikator"
+  progressbar: "Förloppsindikator",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Sida {0}",
+  // "d" - a day placeholder symbol in a datetime input mask
+  maskPlaceholderDay: "d",
+  // "m" - a month placeholder symbol in a datetime input mask
+  maskPlaceholderMonth: "m",
+  // "y" - a year placeholder symbol in a datetime input mask
+  maskPlaceholderYear: "å",
+  // "h" - a 12-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour12: "t",
+  // "H" - a 24-hour placeholder symbol in a datetime input mask
+  maskPlaceholderHour24: "T",
+  // "M" - a minute placeholder symbol in a datetime input mask
+  maskPlaceholderMinute: "M",
+  // "s" - a second placeholder symbol in a datetime input mask
+  maskPlaceholderSecond: "s",
+  // "t" - a lower case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerLower: "f",
+  // "T" - an upper case AM/PM marker placeholder symbol in a datetime input mask
+  maskPlaceholderTimeMarkerUpper: "F"
 };
 
 setupLocale({ localeCode: "sv", strings: swedishSurveyStrings, nativeName: "svenska", englishName: "Swedish" });

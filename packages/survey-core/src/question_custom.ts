@@ -897,6 +897,24 @@ export class QuestionCustomModel extends QuestionCustomModelBase {
   public get contentQuestion(): Question {
     return this.questionWrapper;
   }
+  public get ariaTitleId(): string {
+    if (this.contentQuestion) {
+      return this.contentQuestion.ariaTitleId;
+    }
+    return this.renderedId + "_ariaTitle11";
+  }
+  public get ariaDescriptionId(): string {
+    if (this.contentQuestion) {
+      return this.contentQuestion.ariaDescriptionId;
+    }
+    return this.renderedId + "_ariaDescription";
+  }
+  public get commentId(): string {
+    if (this.contentQuestion) {
+      return this.contentQuestion.commentId;
+    }
+    return this.renderedId + "_comment";
+  }
   protected createQuestion(): Question {
     var json = this.customQuestion.json;
     var res: any = null;
@@ -952,6 +970,44 @@ export class QuestionCustomModel extends QuestionCustomModelBase {
     if (!!this.contentQuestion) {
       this.contentQuestion.runCondition(properties);
     }
+  }
+  public getConditionJson(operator: string = null, path: string = null): any {
+    if (!!this.contentQuestion && this.isContentConditionPath(path)) {
+      return this.contentQuestion.getConditionJson(operator, path);
+    }
+    return super.getConditionJson(operator, path);
+  }
+  private isContentConditionPath(path: string): boolean {
+    if (!path) return false;
+    return path !== this.name && path !== this.getValueName();
+  }
+  public addConditionObjectsByContext(objects: Array<IConditionObject>, context: any): void {
+    if (!!this.contentQuestion) {
+      const nestedObjs: Array<IConditionObject> = [];
+      this.contentQuestion.addConditionObjectsByContext(nestedObjs, context);
+      const contentNames = [this.contentQuestion.getValueName()];
+      for (let i = 0; i < nestedObjs.length; i++) {
+        const obj = nestedObjs[i];
+        obj.name = this.replaceContentPrefix(obj.name, contentNames, this.getValueName());
+        obj.text = this.replaceContentPrefix(obj.text, [this.contentQuestion.processedTitle], this.processedTitle);
+        obj.question = this;
+        objects.push(obj);
+      }
+      return;
+    }
+    super.addConditionObjectsByContext(objects, context);
+  }
+  private replaceContentPrefix(name: string, contentNames: Array<string>, newName: string): string {
+    if (!name) return name;
+    for (let i = 0; i < contentNames.length; i++) {
+      const contentName = contentNames[i];
+      if (!contentName) continue;
+      if (name === contentName) return newName;
+      if (name.indexOf(contentName + ".") === 0) {
+        return newName + name.substring(contentName.length);
+      }
+    }
+    return name;
   }
   protected convertDataName(name: string): string {
     const q = this.contentQuestion;
@@ -1062,6 +1118,9 @@ export class CompositeValueGetterContext extends QuestionValueGetterContext {
     super(question);
   }
   public getObj(): Base { return this.question; }
+  public getContextKeys(): { [key: string]: any } {
+    return { [settings.expressionVariables.composite]: this.question };
+  }
   public getValue(params: IValueGetterContextGetValueParams): IValueGetterInfo {
     const cq = <QuestionCompositeModel>this.question;
     const path = params.path;
@@ -1097,6 +1156,10 @@ export class QuestionCompositeModel extends QuestionCustomModelBase {
   protected getCssRoot(cssClasses: any): string {
     return new CssClassBuilder().append(super.getCssRoot(cssClasses)).append(cssClasses.composite).toString();
   }
+  protected getCssHeader(cssClasses: any): string {
+    return new CssClassBuilder().append(super.getCssHeader(cssClasses)).append(cssClasses.compositeHeader).toString();
+  }
+
   public get contentPanel(): PanelModel {
     return this.panelWrapper;
   }

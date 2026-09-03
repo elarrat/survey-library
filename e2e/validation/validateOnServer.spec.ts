@@ -1,5 +1,5 @@
 import { Page } from "playwright";
-import { frameworks, url, initSurvey, getSurveyResult, test, expect } from "../helper";
+import { frameworks, url, initSurvey, getSurveyResult, test, expect, getButtonByText } from "../helper";
 
 const title = "validateOnServer";
 
@@ -49,17 +49,15 @@ frameworks.forEach((framework) => {
         .locator("div")
         .filter({ hasText: "The country name 'wombatland' is not in this list: http://services.groupkt.com/country/get/all" })
         .first();
-      let surveyResult;
 
       await page.locator("input[type=\"text\"]").pressSequentially("wombatland");
-      await page.locator("input[value=\"Complete\"]").click();
+      await getButtonByText(page, "Complete").click();
       await getErrorSpan.waitFor({ state: "visible", timeout: 1000 });
       await getErrorSpan.hover();
       await page.locator("input[type=\"text\"]").fill("Romania");
-      await page.locator("input[value=\"Complete\"]").click();
+      await getButtonByText(page, "Complete").click();
 
-      surveyResult = await getSurveyResult(page);
-      await expect(surveyResult).toEqual({
+      await expect.poll(async () => await getSurveyResult(page), { timeout: 300 }).toEqual({
         country: "Romania"
       });
     });

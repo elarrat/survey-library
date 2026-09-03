@@ -69,8 +69,12 @@ export var kazakhStrings = {
   stepError: "Қадам өлшеміне сәйкес келетін мәнді {0}.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "Мән {0} артық болмауы тиіс",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Жарамсыз енгізу",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Нөмірлерді беруге жол берілмейді.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Қажетті форматқа сәйкес мәнді толтырыңыз.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Өтінеміз, {0} ден көп таңба енгізіңіз.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var kazakhStrings = {
   urlGetChoicesError: "Сұратымға жауап бос келді немесе 'path' қасиеті қате көрсетілген ",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Файлдың мөлшері {0} аспау керек.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Байттар, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "Жүктей алатын файлдардың ең көп саны {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "Файлдарды кері жүктеу мүмкін емес. 'OnUploadFiles' оқиғасына өңдеушіні қосуыңызды сұраймыз.",
   // "Response required: enter another value."
@@ -153,8 +161,6 @@ export var kazakhStrings = {
   savingDataError: "Қателік туындады, нәтиже сақталынбады.",
   // "The results were saved successfully!"
   savingDataSuccess: "Нәтиже ойдағыдай сақталды!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Сіздің жауабыңыз 64КБ-тан асады. Файлдың өлшемін азайтып, қайталап көріңіз немесе сауалнама иесіне хабарласыңыз.",
   // "Try again"
   saveAgainButton: "Қайтадан байқап көру",
   // "min"
@@ -238,7 +244,9 @@ export var kazakhStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Мазмұн кестесі",
   // [Auto-translated] "Progress bar"
-  progressbar: "Прогресс тақтасы"
+  progressbar: "Прогресс тақтасы",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "{0}-бет"
 };
 
 setupLocale({ localeCode: "kk", strings: kazakhStrings, nativeName: "kazakh", englishName: "Kazakh" });

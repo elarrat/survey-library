@@ -69,8 +69,12 @@ export var persianSurveyStrings = {
   stepError: "لطفا مقداری را وارد کنید که با اندازه گام {0} مطابقت داشته باشد.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "ارزش نباید بیشتر از {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "ورودی نامعتبر",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "شماره ها مجاز نیستند.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "لطفا مقدار را تکمیل کنید تا با قالب مورد نیاز مطابقت داشته باشد.",
   // "Please enter at least {0} character(s)."
   textMinLength: "لطفا حداقل  {0} حرف وارد کنید",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var persianSurveyStrings = {
   urlGetChoicesError: "درخواست مسیری خالی بازگشت داده یا مسیر درست تنظیم نشده",
   // "The file size should not exceed {0}."
   exceedMaxSize: "بیشترین حجم مجاز فایل: {0}",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "بایت ها, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "حداکثر تعداد فایل هایی که می توانید بارگذاری کنید {0} است.",
   // "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "پروندهها را نمیتوان بارگذاری کرد. لطفا یک گرداننده برای رویداد \"onUploadFiles\" اضافه کنید.",
   // "Response required: enter another value."
@@ -127,7 +135,7 @@ export var persianSurveyStrings = {
   noRowsText: "هیچ ردیفی وجود ندارد.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "ردیف {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "جدید",
@@ -153,8 +161,6 @@ export var persianSurveyStrings = {
   savingDataError: "خطایی در ذخیره سازی نتایج رخ داده است",
   // "The results were saved successfully!"
   savingDataSuccess: "نتایج با موفقیت ذخیره شد",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "پاسخ شما بیش از 64 کیلوبایت است. لطفا حجم فایل(های) خود را کاهش دهید و دوباره امتحان کنید یا با مالک نظرسنجی تماس بگیرید.",
   // "Try again"
   saveAgainButton: "مجدد تلاش کنید",
   // "min"
@@ -238,7 +244,9 @@ export var persianSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "جدول محتویات",
   // [Auto-translated] "Progress bar"
-  progressbar: "نوار پیشرفت"
+  progressbar: "نوار پیشرفت",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "صفحه {0}"
 };
 
 setupLocale({ localeCode: "fa", strings: persianSurveyStrings, nativeName: "فارْسِى", englishName: "Persian", rtl: true });

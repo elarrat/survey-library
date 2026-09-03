@@ -37,8 +37,8 @@ export var hungarianSurveyStrings = {
   panelDynamicTabTextFormat: "Panel {panelIndex}",
   // "Answered {0}/{1} questions"
   questionsProgressText: "Válaszolt kérdések: {0} / {1}",
-  // "The survey doesn't contain any visible elements."
-  emptySurvey: "The survey doesn't contain any visible elements.",
+  // [Auto-translated] "The survey doesn't contain any visible elements."
+  emptySurvey: "A felmérés nem tartalmaz látható elemeket.",
   // "Thank you for completing the survey"
   completingSurvey: "Köszönjük, hogy kitöltötte felmérésünket!",
   // "You have already completed this survey."
@@ -69,8 +69,12 @@ export var hungarianSurveyStrings = {
   stepError: "Kérjük, adjon meg egy értéket, amely megfelel a {0} lépésméretének.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "Az érték nem lehet nagyobb, mint {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Érvénytelen bemenet",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Számok nem engedélyezettek.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Kérjük, töltse ki az értéket, hogy megfeleljen a szükséges formátumnak.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Adjon meg legalább {0} karaktert!",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var hungarianSurveyStrings = {
   urlGetChoicesError: "A lekérdezés üres adattal tért vissza, vagy a 'path' paraméter helytelen.",
   // "The file size should not exceed {0}."
   exceedMaxSize: "A méret nem lehet nagyobb, mint {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Bájtok, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "A maximális fájlszám, amit feltölthetsz, {0}.",
   // "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var hungarianSurveyStrings = {
   noRowsText: "Nincsenek sorok.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "{rowIndex} sor",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Új hozzáadása",
@@ -155,14 +161,12 @@ export var hungarianSurveyStrings = {
   savingDataError: "Egy hiba folytán nem tudtuk elmenteni az eredményt.",
   // "The results were saved successfully!"
   savingDataSuccess: "Eredmény sikeresen mentve!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "A válasz meghaladja a 64 KB-ot. Kérjük, csökkentse a fájl(ok) méretét, és próbálja újra, vagy lépjen kapcsolatba a felmérés tulajdonosával.",
   // "Try again"
   saveAgainButton: "Próbálja újra",
-  // "min"
+  // [Auto-translated] "min"
   timerMin: "min",
-  // "sec"
-  timerSec: "sec",
+  // [Auto-translated] "sec"
+  timerSec: "SEC",
   // "You have spent {0} on this page and {1} in total."
   timerSpentAll: "Ön {0} összeget költött ezen az oldalon, és összesen {1}.",
   // "You have spent {0} on this page."
@@ -240,7 +244,9 @@ export var hungarianSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Tartalomjegyzék",
   // [Auto-translated] "Progress bar"
-  progressbar: "Folyamatjelző sáv"
+  progressbar: "Folyamatjelző sáv",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "{0} oldal"
 };
 
 setupLocale({ localeCode: "hu", strings: hungarianSurveyStrings, nativeName: "magyar", englishName: "Hungarian" });

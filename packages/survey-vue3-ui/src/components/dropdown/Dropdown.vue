@@ -20,58 +20,60 @@
       :aria-activedescendant="model.ariaQuestionActivedescendant"
       :required="question.isRequired ? true : null"
     >
-      <div v-if="model.showHintPrefix" :class="question.cssClasses.hintPrefix">
-        <span>{{ model.hintStringPrefix }}</span>
-      </div>
-
       <div :class="question.cssClasses.controlValue">
-        <SvComponent
-          :is="'survey-string'"
-          v-if="showSelectedItemLocText"
-          :locString="selectedItemLocText"
-        />
-        <div
-          v-if="model.showHintString"
-          :class="question.cssClasses.hintSuffix"
-        >
-          <span style="visibility: hidden">{{
-            model.inputStringRendered
-          }}</span>
-          <span>{{ model.hintStringSuffix }}</span>
+        <div v-if="model.showHintPrefix" :class="question.cssClasses.hintPrefix">
+          <span>{{ model.hintStringPrefix }}</span>
         </div>
-        <SvComponent
-          v-if="question.showInputFieldComponent"
-          :is="question.inputFieldComponentName"
-          :item="model.getSelectedAction()"
-          :question="question"
-        >
-        </SvComponent>
-        <input
-          v-if="model.needRenderInput"
-          type="text"
-          ref="inputElement"
-          v-bind:class="question.cssClasses.filterStringInput"
-          v-bind:disabled="question.isDisabledAttr"
-          autocomplete="off"
-          :inputmode="model.inputMode"
-          :id="question.getInputId()"
-          :tabindex="model.noTabIndex ? undefined : -1"
-          :readonly="model.filterReadOnly ? true : undefined"
-          :role="model.ariaInputRole"
-          :aria-required="model.ariaInputRequired"
-          :aria-invalid="model.ariaInputInvalid"
-          :aria-errormessage="model.ariaInputErrorMessage"
-          :aria-expanded="model.ariaInputExpanded"
-          :aria-controls="model.ariaInputControls"
-          :aria-label="model.ariaInputLabel"
-          :aria-labelledby="model.ariaInputLabelledby"
-          :aria-describedby="model.ariaInputDescribedby"
-          :aria-activedescendant="model.ariaInputActivedescendant"
-          :placeholder="model.placeholderRendered"
-          @input="inputChange"
-          @blur="blur"
-          @focus="focus"
-        />
+
+        <div :class="question.cssClasses.inputPrefixWrapper">
+          <SvComponent
+            :is="'survey-string'"
+            v-if="showSelectedItemLocText"
+            :locString="selectedItemLocText"
+          />
+          <div
+            v-if="model.showHintString"
+            :class="question.cssClasses.hintSuffix"
+          >
+            <span style="visibility: hidden">{{
+              model.inputStringRendered
+            }}</span>
+            <span>{{ model.hintStringSuffix }}</span>
+          </div>
+          <SvComponent
+            v-if="question.showInputFieldComponent"
+            :is="question.inputFieldComponentName"
+            :item="model.getSelectedAction()"
+            :question="question"
+          >
+          </SvComponent>
+          <input
+            v-if="model.needRenderInput"
+            type="text"
+            ref="inputElement"
+            v-bind:class="question.cssClasses.filterStringInput"
+            v-bind:disabled="question.isDisabledAttr"
+            autocomplete="off"
+            :inputmode="model.inputMode"
+            :id="question.getInputId()"
+            :tabindex="model.noTabIndex ? undefined : -1"
+            :readonly="model.filterReadOnly ? true : undefined"
+            :role="model.ariaInputRole"
+            :aria-required="model.ariaInputRequired"
+            :aria-invalid="model.ariaInputInvalid"
+            :aria-errormessage="model.ariaInputErrorMessage"
+            :aria-expanded="model.ariaInputExpanded"
+            :aria-controls="model.ariaInputControls"
+            :aria-label="model.ariaInputLabel"
+            :aria-labelledby="model.ariaInputLabelledby"
+            :aria-describedby="model.ariaInputDescribedby"
+            :aria-activedescendant="model.ariaInputActivedescendant"
+            :placeholder="model.placeholderRendered"
+            @input="inputChange"
+            @blur="blur"
+            @focus="focus"
+          />
+        </div>
       </div>
       <SvComponent :is="'sv-action-bar'" :model="model.editorButtons" />
     </div>
@@ -93,8 +95,21 @@
       :tabindex="question.isDisabledAttr ? undefined : 0"
       :class="question.getControlClass()"
     >
-      <div v-if="question.readOnlyText" :class="question.cssClasses.controlValue">
-           <SvComponent :is="'survey-string'" :locString="question.locReadOnlyText" />
+      <div
+        v-if="question.showInputFieldComponent"
+        :class="question.cssClasses.controlValue"
+      >
+        <SvComponent
+          :is="question.inputFieldComponentName"
+          :item="readonlySelectedItem"
+          :question="question"
+        />
+      </div>
+      <div
+        v-else-if="question.readOnlyText"
+        :class="question.cssClasses.controlValue"
+      >
+        <SvComponent :is="'survey-string'" :locString="question.locReadOnlyText" />
       </div>
       <SvComponent :is="'sv-action-bar'" :model="model.editorButtons" />
     </div>
@@ -144,6 +159,12 @@ const showSelectedItemLocText = computed(
   () => props.question.showSelectedItemLocText
 );
 const selectedItemLocText = computed(() => props.question.selectedItemLocText);
+const readonlySelectedItem = computed(() => {
+  const m = model.value;
+  return m && typeof m.getSelectedAction === "function"
+    ? m.getSelectedAction()
+    : props.question.selectedItem;
+});
 
 useBase(() => model.value);
 

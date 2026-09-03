@@ -8,10 +8,11 @@ export interface IFunctionCachedResult {
   result: any;
 }
 interface IFunctionInfo {
-  func: (params: any[], originalParams?: any[]) => any;
+  func: (params: any[], originalParams: any[]) => any;
   name: string;
   isAsync: boolean;
   useCache: boolean;
+  originalValueParams?: Array<number>;
 }
 interface IFunctionCachedSurveyValue {
   name: string;
@@ -34,12 +35,21 @@ export class FunctionFactory {
   private functionHash: HashTable<IFunctionInfo> = {};
   private functionCache: HashTable<Array<IFunctionCachedInfo>> = {};
 
-  public register(name: string, func: (params: any[], originalParams?: any[]) => any, isAsync?: boolean, useCache?: boolean): void {
-    if (isAsync && useCache === undefined) {
-      useCache = true;
+  public register(info: IFunctionRegistration): void;
+  public register(name: string, func: (params: any[], originalParams?: any[]) => any, isAsync?: boolean, useCache?: boolean): void;
+  public register(nameOrInfo: string | IFunctionRegistration, func?: (params: any[], originalParams?: any[]) => any, isAsync?: boolean, useCache?: boolean): void {
+    const info: IFunctionRegistration = typeof nameOrInfo === "object" ? nameOrInfo : { name: nameOrInfo, func: func!, isAsync: isAsync, useCache: useCache };
+    let useCacheValue = info.useCache;
+    if (info.isAsync && useCacheValue === undefined) {
+      useCacheValue = true;
     }
-    this.clearCache(name);
-    this.functionHash[name] = { name, func, isAsync: !!isAsync, useCache: !!useCache };
+    this.clearCache(info.name);
+    this.functionHash[info.name] = { name: info.name, func: info.func, isAsync: !!info.isAsync, useCache: !!useCacheValue, originalValueParams: info.originalValueParams };
+  }
+  // Returns the indexes of the parameters that must receive the original (unfiltered) value.
+  public getOriginalValueParams(name: string): Array<number> {
+    const funcInfo = this.functionHash[name];
+    return !!funcInfo && Array.isArray(funcInfo.originalValueParams) ? funcInfo.originalValueParams : [];
   }
   public unregister(name: string): void {
     delete this.functionHash[name];
@@ -68,6 +78,18 @@ export class FunctionFactory {
       result.push(key);
     }
     return result.sort();
+  }
+  public getRegistrations(): Array<IFunctionRegistration> {
+    return this.getAll().map((name: string): IFunctionRegistration => {
+      const info = this.functionHash[name];
+      const res: IFunctionRegistration = {
+        name: info.name, func: info.func, isAsync: info.isAsync, useCache: info.useCache,
+      };
+      if (Array.isArray(info.originalValueParams)) {
+        res.originalValueParams = info.originalValueParams.slice();
+      }
+      return res;
+    });
   }
   public run(name: string, params: any[], properties: HashTable<any>, originalParams: any[]): any {
     if (!properties) {
@@ -195,12 +217,15 @@ export class FunctionFactory {
 }
 export interface IFunctionRegistration {
   name: string;
-  func: (params: any[], originalParams?: any[]) => any;
+  func: (params: any[], originalParams: any[]) => any;
   isAsync?: boolean;
   useCache?: boolean;
+  // Indexes of the parameters that must receive the original (unfiltered) value instead of the
+  // default unwrapped value - e.g. the *InArray functions operate on the array of objects.
+  originalValueParams?: Array<number>;
 }
 export function registerFunction(info: IFunctionRegistration): void {
-  FunctionFactory.Instance.register(info.name, info.func, info.isAsync, info.useCache);
+  FunctionFactory.Instance.register(info);
 }
 export function unregisterFunction(name: string): void {
   FunctionFactory.Instance.unregister(name);
@@ -304,24 +329,37 @@ function trunc(params: any[]): any {
 }
 FunctionFactory.Instance.register("trunc", trunc);
 
+function isReturnColumnParam(param: string, operand: any): boolean {
+  if (!operand || !operand.getType || operand.getType() !== "const") return false;
+  return typeof param === "string" && !/[{}><=!]/.test(param);
+}
 function getInArrayParams(params: any[], originalParams: any[]): any {
-  if (params.length < 2 || params.length > 3) return null;
+  if (params.length < 2 || params.length > 4) return null;
   const arr = params[0];
   if (!arr) return null;
   if (!Array.isArray(arr) && !Array.isArray(Object.keys(arr))) return null;
   const name = params[1];
   if (typeof name !== "string" && !(name instanceof String)) return null;
-  let expression = params.length > 2 ? params[2] : undefined;
+  let returnName: string = name as string;
+  let expressionIndex = 2;
+  if (params.length > 2) {
+    const operand = Array.isArray(originalParams) && originalParams.length > 2 ? originalParams[2] : undefined;
+    if (isReturnColumnParam(params[2], operand)) {
+      returnName = params[2] as string;
+      expressionIndex = 3;
+    }
+  }
+  let expression = params.length > expressionIndex ? params[expressionIndex] : undefined;
   if (typeof expression !== "string" && !(expression instanceof String)) {
     expression = undefined;
   }
   if (!expression) {
-    const operand = Array.isArray(originalParams) && originalParams.length > 2 ? originalParams[2] : undefined;
+    const operand = Array.isArray(originalParams) && originalParams.length > expressionIndex ? originalParams[expressionIndex] : undefined;
     if (operand && !!operand.toString()) {
       expression = operand.toString();
     }
   }
-  return { data: arr, name: name, expression: expression };
+  return { data: arr, name: name, expression: expression, returnName: returnName };
 }
 
 function convertToNumber(val: any): number {
@@ -372,25 +410,45 @@ function sumInArray(params: any[], originalParams: any[]): any {
   });
   return res !== undefined ? res : 0;
 }
-FunctionFactory.Instance.register("sumInArray", sumInArray);
+FunctionFactory.Instance.register({ name: "sumInArray", func: sumInArray, originalValueParams: [0] });
+
+function calcMinMaxInArray(properties: any, params: any[], originalParams: any[],
+  isMin: boolean
+): any {
+  var v = getInArrayParams(params, originalParams);
+  if (!v) return undefined;
+  let condition = !!v.expression ? new ConditionRunner(v.expression) : undefined;
+  if (condition && condition.isAsync) {
+    condition = undefined;
+  }
+  var bestVal: number = undefined;
+  var bestItem: any = undefined;
+  const items = Array.isArray(v.data) ? v.data : Object.keys(v.data).map(key => v.data[key]);
+  for (var i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (!item || Helpers.isValueEmpty(item[v.name])) continue;
+    if (condition && !condition.runValues(item, properties)) continue;
+    const val = convertToNumber(item[v.name]);
+    if (val == undefined || val == null) continue;
+    if (bestVal == undefined || (isMin ? val < bestVal : val > bestVal)) {
+      bestVal = val;
+      bestItem = item;
+    }
+  }
+  if (!bestItem) return undefined;
+  if (v.returnName !== v.name) return bestItem[v.returnName];
+  return bestVal;
+}
 
 function minInArray(params: any[], originalParams: any[]): any {
-  return calcInArray(getProperties(this), params, originalParams, function(res: number, val: number): number {
-    if (res == undefined) return val;
-    if (val == undefined || val == null) return res;
-    return res < val ? res : val;
-  });
+  return calcMinMaxInArray(getProperties(this), params, originalParams, true);
 }
-FunctionFactory.Instance.register("minInArray", minInArray);
+FunctionFactory.Instance.register({ name: "minInArray", func: minInArray, originalValueParams: [0] });
 
 function maxInArray(params: any[], originalParams: any[]): any {
-  return calcInArray(getProperties(this), params, originalParams, function(res: number, val: number): number {
-    if (res == undefined) return val;
-    if (val == undefined || val == null) return res;
-    return res > val ? res : val;
-  });
+  return calcMinMaxInArray(getProperties(this), params, originalParams, false);
 }
-FunctionFactory.Instance.register("maxInArray", maxInArray);
+FunctionFactory.Instance.register({ name: "maxInArray", func: maxInArray, originalValueParams: [0] });
 
 function countInArray(params: any[], originalParams: any[]): any {
   var res = calcInArray(getProperties(this), params, originalParams, function(res: number, val: number): number {
@@ -400,7 +458,7 @@ function countInArray(params: any[], originalParams: any[]): any {
   }, false);
   return res !== undefined ? res : 0;
 }
-FunctionFactory.Instance.register("countInArray", countInArray);
+FunctionFactory.Instance.register({ name: "countInArray", func: countInArray, originalValueParams: [0] });
 
 function avgInArray(params: any[], originalParams: any[]): any {
   const properties = getProperties(this);
@@ -409,7 +467,7 @@ function avgInArray(params: any[], originalParams: any[]): any {
   if (count == 0) return 0;
   return funcCall("sumInArray") / count;
 }
-FunctionFactory.Instance.register("avgInArray", avgInArray);
+FunctionFactory.Instance.register({ name: "avgInArray", func: avgInArray, originalValueParams: [0] });
 
 function iif(params: any[]): any {
   if (!Array.isArray(params) || params.length < 2) return null;
@@ -424,10 +482,12 @@ function getDate(params: any[]): any {
 }
 FunctionFactory.Instance.register("getDate", getDate);
 
-function dateDiffMonths(date1Param: any, date2Param: any, type: string): number {
+// owner carries the clock of the survey the expression belongs to: an age() with one parameter
+// measures it against the current moment, and that moment is the survey's, not the machine's.
+function dateDiffMonths(date1Param: any, date2Param: any, type: string, owner?: any): number {
   if (type === "days") return diffDays([date1Param, date2Param]);
-  const date1 = createDate("function-dateDiffMonths", date1Param);
-  const date2 = createDate("function-dateDiffMonths", date2Param);
+  const date1 = createDate("function-dateDiffMonths", date1Param, owner);
+  const date2 = createDate("function-dateDiffMonths", date2Param, owner);
   const age = date2.getFullYear() - date1.getFullYear();
   type = type || "years";
   let ageInMonths = age * 12 + date2.getMonth() - date1.getMonth();
@@ -438,7 +498,7 @@ function dateDiffMonths(date1Param: any, date2Param: any, type: string): number 
 }
 function age(params: any[]): number {
   if (!Array.isArray(params) || params.length < 1 || !params[0]) return null;
-  return dateDiffMonths(params[0], undefined, (params.length > 1 ? params[1] : "") || "years");
+  return dateDiffMonths(params[0], undefined, (params.length > 1 ? params[1] : "") || "years", this?.survey);
 }
 FunctionFactory.Instance.register("age", age);
 
@@ -446,14 +506,14 @@ function dateDiff(params: any[]): any {
   if (!Array.isArray(params) || params.length < 2 || !params[0] || !params[1]) return null;
   const type = (params.length > 2 ? params[2] : "") || "days";
   if (type === "hours" || type === "minutes" || type === "seconds") {
-    const date1: any = createDate("function-dateDiffMonths", params[0]);
-    const date2: any = createDate("function-dateDiffMonths", params[1]);
+    const date1: any = createDate("function-dateDiffMonths", params[0], this?.survey);
+    const date2: any = createDate("function-dateDiffMonths", params[1], this?.survey);
     const diffMs = Math.abs(date2 - date1);
     if (type === "hours") return Math.ceil(diffMs / (1000 * 60 * 60));
     if (type === "minutes") return Math.ceil(diffMs / (1000 * 60));
     return Math.ceil(diffMs / 1000);
   }
-  return dateDiffMonths(params[0], params[1], type);
+  return dateDiffMonths(params[0], params[1], type, this?.survey);
 }
 FunctionFactory.Instance.register("dateDiff", dateDiff);
 
@@ -489,7 +549,14 @@ function isContainerReadyCore(container: any): boolean {
   if (!container) return false;
   var questions = container.questions;
   for (var i = 0; i < questions.length; i++) {
-    if (!questions[i].validate(false)) return false;
+    const q = questions[i];
+    if (Array.isArray(q.panels)) {
+      for (let j = 0; j < q.panels.length; j++) {
+        if (!isContainerReadyCore(q.panels[j])) return false;
+      }
+    } else {
+      if (!q.validate(false)) return false;
+    }
   }
   return true;
 }
@@ -522,13 +589,16 @@ function isDisplayMode() {
 }
 FunctionFactory.Instance.register("isDisplayMode", isDisplayMode);
 
+// The functions that mean "now" read the clock of the survey the expression runs in. this.survey is
+// the same object isDisplayMode() and isContainerReady() read, and it is absent only when an
+// expression is run outside a survey - then the machine clock answers, as it always did.
 function currentDate() {
-  return createDate("function-currentDate");
+  return createDate("function-currentDate", undefined, this?.survey);
 }
 FunctionFactory.Instance.register("currentDate", currentDate);
 
 function today(params: any[]) {
-  var res = createDate("function-today");
+  var res = createDate("function-today", undefined, this?.survey);
   if (!settings.storeUtcDates) {
     res.setHours(0, 0, 0, 0);
   } else {
@@ -548,7 +618,7 @@ function getYear(params: any[]) {
 FunctionFactory.Instance.register("getYear", getYear);
 
 function currentYear() {
-  return createDate("function-currentYear").getFullYear();
+  return createDate("function-currentYear", undefined, this?.survey).getFullYear();
 }
 FunctionFactory.Instance.register("currentYear", currentYear);
 
@@ -563,34 +633,36 @@ function diffDays(params: any[]) {
 }
 FunctionFactory.Instance.register("diffDays", diffDays);
 
+// Called through .call() so that the survey the function is running in reaches today(): a plain call
+// would lose it, and year() with no parameter means "the current year of this survey".
 function dateFromFirstParameterOrToday(name: string, params: any[]) {
-  let date = today(undefined);
+  let date = today.call(this, undefined);
   if (params && params[0]) {
-    date = createDate("function-" + name, params[0]);
+    date = createDate("function-" + name, params[0], this?.survey);
   }
   return date;
 }
 
 function year(params: any[]): any {
-  let date = dateFromFirstParameterOrToday("year", params);
+  let date = dateFromFirstParameterOrToday.call(this, "year", params);
   return date.getFullYear();
 }
 FunctionFactory.Instance.register("year", year);
 
 function month(params: any[]): any {
-  let date = dateFromFirstParameterOrToday("month", params);
+  let date = dateFromFirstParameterOrToday.call(this, "month", params);
   return date.getMonth() + 1;
 }
 FunctionFactory.Instance.register("month", month);
 
 function day(params: any[]): any {
-  let date = dateFromFirstParameterOrToday("day", params);
+  let date = dateFromFirstParameterOrToday.call(this, "day", params);
   return date.getDate();
 }
 FunctionFactory.Instance.register("day", day);
 
 function weekday(params: any[]): any {
-  let date = dateFromFirstParameterOrToday("weekday", params);
+  let date = dateFromFirstParameterOrToday.call(this, "weekday", params);
   return date.getDay();
 }
 FunctionFactory.Instance.register("weekday", weekday);

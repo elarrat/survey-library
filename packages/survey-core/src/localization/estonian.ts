@@ -69,8 +69,12 @@ export var estonianSurveyStrings = {
   stepError: "Sisestage väärtus, mis vastab {0} sammu suurusele.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "Väärtus ei tohiks olla suurem kui {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Kehtetu sisend",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Numbrid ei ole lubatud.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Palun täida väärtus, et see vastaks nõutud formaadile.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Palun sisesta vähemalt {0} tähemärki.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,8 @@ export var estonianSurveyStrings = {
   urlGetChoicesError: "Taotlus tagastas tühjad andmed või atribuut 'path' on vale",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Faili suurus ei tohi ületada {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Baitid, KB, MB, GB, TB",
   // [Auto-translated] "The maximum number of files you can upload is {0}."
   exceedMaxFiles: "Maksimaalne failide arv, mida saad üles laadida, on {0}.",
   // "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
@@ -129,7 +135,7 @@ export var estonianSurveyStrings = {
   noRowsText: "Ridu pole.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Rida {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "Lisa uus",
@@ -155,11 +161,9 @@ export var estonianSurveyStrings = {
   savingDataError: "Tekkis viga ning me ei saanud vastuseid salvestada.",
   // "The results were saved successfully!"
   savingDataSuccess: "Vastuste salvestamine õnnestus!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Teie vastus ületab 64 KB. Vähendage oma faili(de) mahtu ja proovige uuesti või võtke ühendust uuringu omanikuga.",
   // "Try again"
   saveAgainButton: "Proovi uuesti",
-  // "min"
+  // [Auto-translated] "min"
   timerMin: "min",
   // "sec"
   timerSec: "sek",
@@ -240,7 +244,9 @@ export var estonianSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Sisukord",
   // [Auto-translated] "Progress bar"
-  progressbar: "Edenemisriba"
+  progressbar: "Edenemisriba",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Lehekülg {0}"
 };
 
 setupLocale({ localeCode: "et", strings: estonianSurveyStrings, nativeName: "eesti keel", englishName: "Estonian" });

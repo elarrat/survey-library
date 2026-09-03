@@ -5,13 +5,13 @@ import { LocalizableString, LocalizableStrings } from "./localizablestring";
 import { Helpers, HashTable, createDate } from "./helpers";
 import { EmailValidator } from "./validator";
 import { SurveyError } from "./survey-error";
-import { CustomError } from "./error";
+import { CustomError, PatternIncompleteError } from "./error";
 import { settings } from "./settings";
 import { QuestionTextBase } from "./question_textbase";
 import { CssClassBuilder } from "./utils/cssClassBuilder";
 import { InputElementAdapter } from "./mask/input_element_adapter";
 import { InputMaskBase } from "./mask/mask_base";
-import { getAvailableMaskTypeChoices, IInputMask } from "./mask/mask_utils";
+import { getAvailableMaskTypeChoices, IInputMask, IMaskLocaleChange } from "./mask/mask_utils";
 import { getRootNode } from "./utils/dom-utils";
 
 /**
@@ -38,6 +38,11 @@ export class QuestionTextModel extends QuestionTextBase {
     if (this.maskInputAdapter) {
       this.maskInputAdapter.dispose();
       this.maskInputAdapter = undefined;
+    }
+  }
+  public updateInputValueFromMask() {
+    if (this.maskInputAdapter) {
+      this.maskInputAdapter.updateInputValue();
     }
   }
   private updateMaskAdapter() {
@@ -111,6 +116,33 @@ export class QuestionTextModel extends QuestionTextBase {
     this.setNewMaskSettingsProperty();
     this.maskSettings.fromJSON(val.toJSON());
     this.updateMaskAdapter();
+  }
+  public localeChanged(): void {
+    super.localeChanged();
+    if (this.maskTypeIsEmpty || !this.maskSettings.isLocaleDependent) return;
+    // While the element is focused, an in-progress entry may exist only in it - masked
+    // keystrokes are written there directly and reach _inputValue on blur - so its text has to
+    // be captured before localeChanged() below rebuilds the mask and rerenders the element.
+    // Without focus a blur has already synchronized _inputValue, which stays authoritative
+    // (a programmatic inputValue assignment updates the model first, not the element).
+    const isEditing = !!this.maskInputAdapter && this.maskInputAdapter.isInputElementFocused;
+    const enteredText = isEditing ? this.maskInputAdapter.inputElementText : this._inputValue;
+    const state: IMaskLocaleChange = {
+      // an incomplete entry is not stored in the question value
+      enteredText: this.isEmpty() ? enteredText : undefined,
+      // a masked value is stored in the format of the previous locale
+      value: this.maskSettings.saveMaskedValue ? this.value : undefined
+    };
+    // Base.localeChanged() does not descend into the maskSettings property. The mask notifies
+    // this question and the input element adapter about the change via onPropertyChanged.
+    this.maskSettings.localeChanged(state);
+    if (!!state.value && state.value !== this.value) {
+      this.value = state.value;
+    }
+    if (!!state.enteredText) {
+      this._inputValue = state.enteredText;
+      this.maskInputAdapter?.updateInputElementText(state.enteredText);
+    }
   }
   private setNewMaskSettingsProperty() {
     this.setPropertyValue("maskSettings", this.createMaskSettings());
@@ -220,6 +252,7 @@ export class QuestionTextModel extends QuestionTextBase {
   @property() inputSize: number;
   /**
    * @deprecated Use the [`inputSize`](https://surveyjs.io/form-library/documentation/api-reference/text-entry-question-model#inputSize) property instead.
+   * @hidden
    */
   public get size(): number {
     return this.inputSize;
@@ -323,8 +356,10 @@ export class QuestionTextModel extends QuestionTextBase {
   @property({ localizable: { defaultStr: "maxError", markdown: true } }) maxErrorText: string;
   /**
    * An error message to display when the entered value does not match the [step size](#step).
+   * @since 2.5.15
    */
   @property({ localizable: { defaultStr: "stepError", markdown: true } }) stepErrorText: string;
+  @property({ localizable: { defaultStr: "invalidInputError", markdown: true } }) invalidInputErrorText: string;
 
   /**
    * Returns `true` if the specified `inputType` supports the `min` and `max` properties.
@@ -347,10 +382,11 @@ export class QuestionTextModel extends QuestionTextBase {
   public set inputValue(val: string) {
     let value = val;
     let _inputValue = val;
+    let keepEnteredText = false;
     if (!this.maskTypeIsEmpty) {
       value = this.maskInstance.getUnmaskedValue(val);
       if (value === undefined || value === null || value === "") {
-        this.doNotUpdateInputValue = true;
+        keepEnteredText = true;
         value = undefined;
       } else {
         _inputValue = this.maskInstance.getMaskedValue(value);
@@ -360,8 +396,10 @@ export class QuestionTextModel extends QuestionTextBase {
       }
     }
     this._inputValue = _inputValue;
-    if (!Helpers.isTwoValueEquals(this.value, value, false, true)) {
+    if (!Helpers.isTwoValueEquals(this.value, value, false, true, false)) {
+      this.doNotUpdateInputValue = keepEnteredText;
       this.value = value;
+      this.doNotUpdateInputValue = false;
     }
   }
   public getFilteredValue(): any {
@@ -373,9 +411,29 @@ export class QuestionTextModel extends QuestionTextBase {
       return this.maskInstance.getUnmaskedValue(val);
     return val;
   }
+  private tryPreserveMaskedStringValue(val: any): any {
+    if (typeof val !== "string") return undefined;
+    const unmaskedVal = this.maskInstance.getUnmaskedValue(val);
+    if (!!unmaskedVal) return val;
+
+    const maskedVal = this.maskInstance.getMaskedValue(val);
+    const emptyMaskedVal = this.maskInstance.getMaskedValue("");
+    if (maskedVal === emptyMaskedVal && val !== emptyMaskedVal) return val;
+
+    if (!this.maskInstance.getUnmaskedValue(maskedVal)) return val;
+    return undefined;
+  }
+
   protected convertToCorrectValue(val: any): any {
-    if (val !== undefined && val !== null && typeof val !== "string" && !this.maskTypeIsEmpty && this.maskSettings.saveMaskedValue) {
-      return this.maskInstance.getMaskedValue(val);
+    if (val !== undefined && val !== null && val !== "" && !this.maskTypeIsEmpty) {
+      if (this.maskSettings.saveMaskedValue) {
+        const preserved = this.tryPreserveMaskedStringValue(val);
+        if (preserved !== undefined) return preserved;
+        return this.maskInstance.getMaskedValue(val);
+      }
+      if (this.maskType === "pattern" && val === this.maskInstance.getMaskedValue(val)) {
+        return this.maskInstance.getUnmaskedValue(val);
+      }
     }
     return super.convertToCorrectValue(val);
   }
@@ -386,17 +444,17 @@ export class QuestionTextModel extends QuestionTextBase {
   }
 
   private updateInputValue() {
+    if (this.doNotUpdateInputValue) return;
     const _value = this.value;
-    if (this.doNotUpdateInputValue) {
-      this.doNotUpdateInputValue = false;
-      return;
-    }
     if (this.maskTypeIsEmpty) {
       this._inputValue = _value;
     } else if (this.maskSettings.saveMaskedValue) {
       this._inputValue = (_value !== undefined && _value !== null) ? _value : this.maskInstance.getMaskedValue("");
     } else {
       this._inputValue = this.maskInstance.getMaskedValue(_value);
+    }
+    if (!!this.maskInputAdapter) {
+      this.maskInputAdapter.updateInputElementValue(_value);
     }
   }
   private hasToConvertToUTC(val: any): boolean {
@@ -421,10 +479,26 @@ export class QuestionTextModel extends QuestionTextBase {
     return super.valueFromDataCore(val);
   }
   private dateValidationMessage: string;
+  private isMaskInputIncomplete(): boolean {
+    if (this.maskTypeIsEmpty) return false;
+    if (!this.isEmpty()) return false;
+    const inputVal = this._inputValue;
+    if (!inputVal) return false;
+    const emptyMaskedValue = this.maskInstance.getMaskedValue("");
+    return inputVal !== emptyMaskedValue;
+  }
   protected onCheckForErrors(errors: Array<SurveyError>, isOnValueChanged: boolean, fireCallback: boolean): void {
     super.onCheckForErrors(errors, isOnValueChanged, fireCallback);
+    if (this.isMaskInputIncomplete()) {
+      const reqIdx = errors.findIndex(e => e.getErrorType() === "required");
+      if (reqIdx >= 0) errors.splice(reqIdx, 1);
+      errors.push(new PatternIncompleteError(null, this));
+    }
     const isInputUpdate = this.getIsInputTextUpdate();
     if (isOnValueChanged && isInputUpdate) return;
+    if (this?.input?.validity?.badInput) {
+      errors.push(new CustomError(this.invalidInputErrorText, this));
+    }
     if (!this.isOnValueChanged) {
       if (this.isValueLessMin) {
         const minError = new CustomError(
@@ -488,7 +562,13 @@ export class QuestionTextModel extends QuestionTextBase {
   }
   protected convertFuncValuetoQuestionValue(val: any): any {
     let type = this.maskTypeIsEmpty ? this.inputType : this.maskSettings.getTypeForExpressions();
-    return Helpers.convertValToQuestionVal(val, type);
+    const res = Helpers.convertValToQuestionVal(val, type);
+    if (!this.maskTypeIsEmpty && this.maskSettings.saveMaskedValue && typeof res === "string") {
+      const preserved = this.tryPreserveMaskedStringValue(res);
+      if (preserved !== undefined) return preserved;
+      return this.maskInstance.getMaskedValue(res);
+    }
+    return res;
   }
   private getMinMaxErrorText(errorText: string, value: any): string {
     if (Helpers.isValueEmpty(value)) return errorText;
@@ -522,7 +602,7 @@ export class QuestionTextModel extends QuestionTextBase {
     let val = Helpers.getNumber(this.value);
     let step = Helpers.getNumber(this.renderedStep);
     let pw = 1;
-    while(Math.round(step * pw) / pw !== step && pw < 1000000) {
+    while((Math.round(step * pw) / pw !== step || Math.round(val * pw) / pw !== val) && pw < 1000000) {
       pw *= 10;
     }
     val = Math.round(val * pw);
@@ -607,18 +687,29 @@ export class QuestionTextModel extends QuestionTextBase {
     return this.locDataListValue;
   }
   public get dataListId(): string {
-    return this.locDataListValue?.hasValue() ? this.id + "_datalist" : undefined;
+    return this.locDataListValue?.hasValue() ? this.renderedId + "_datalist" : undefined;
   }
   protected isPropertyStoredInHash(name: string): boolean {
     if (name === "dataList") return !this.locDataListValue;
     return super.isPropertyStoredInHash(name);
   }
   protected setNewValue(newValue: any): void {
+    this.setIsValueChanged();
     newValue = this.correctValueType(newValue);
     if (!!newValue) {
       this.dateValidationMessage = undefined;
     }
     super.setNewValue(newValue);
+  }
+  public updateValueFromSurvey(newValue: any, clearData: boolean = false): void {
+    super.updateValueFromSurvey(newValue, clearData);
+    if (!this.isEmpty()) {
+      this.setIsValueChanged();
+    }
+    const val = this.value;
+    if (!this.maskTypeIsEmpty && !this.isValueEmpty(newValue) && !this.isTwoValueEquals(val, newValue)) {
+      this.setValueCore(val);
+    }
   }
   protected correctValueType(newValue: any): any {
     if (!newValue) return newValue;
@@ -641,11 +732,11 @@ export class QuestionTextModel extends QuestionTextBase {
   protected hasPlaceholder(): boolean {
     return !this.isReadOnly && this.inputType !== "range";
   }
-  protected getControlCssClassBuilder(): CssClassBuilder {
-    const maxLength = this.getMaxLength();
-    return super.getControlCssClassBuilder()
-      .append(this.cssClasses.constrolWithCharacterCounter, !!maxLength)
-      .append(this.cssClasses.characterCounterBig, maxLength > 99);
+  public getControlClass(): string {
+    return new CssClassBuilder()
+      .append(super.getControlClass())
+      .append(this.cssClasses.isValueChanged, this._isValueChanged)
+      .toString();
   }
   public isReadOnlyRenderDiv(): boolean {
     return this.isReadOnly && settings.readOnly.textRenderMode === "div";
@@ -665,14 +756,32 @@ export class QuestionTextModel extends QuestionTextBase {
   }
   //web-based methods
   private _isWaitingForEnter = false;
-  private _isColorValueChanged = false;
-
+  private _isValueChanged = false;
+  private setIsValueChanged(): void {
+    if (this._isValueChanged) return;
+    this._isValueChanged = true;
+    if (this.input && this.cssClasses.isValueChanged) {
+      this.input.classList.add(this.cssClasses.isValueChanged);
+    }
+  }
   private updateValueOnEvent(event: any) {
-    if (this.inputType === "color" && !this._isColorValueChanged) return;
+    if (this.inputType === "color" && !this._isValueChanged) return;
     const newValue = event.target.value;
     if (!this.isTwoValueEquals(this.value, newValue)) {
       this.inputValue = newValue;
     }
+  }
+  private prevNumberValue: string;
+  private updateNumericValue(event: any): void {
+    if (this.inputType !== "number" || event.key !== "-") return;
+    // Browsers returns empty string for invalid values in type="number" input. We need to store the value before it becomes empty and restore it here.
+    const value = event.target?.value || this.prevNumberValue;
+    // For input type="number", clean up "-" symbols that are not at the first position
+    // This handles the case when renderedMin is undefined (selectionStart is null for type="number")
+    if (typeof value === "string" && value.length > 0) {
+      event.target.value = value[0] + value.substring(1).replace(/-/g, "");
+    }
+    this.prevNumberValue = undefined;
   }
   onCompositionUpdate = (event: any) => {
     if (this.isInputTextUpdate) {
@@ -684,6 +793,7 @@ export class QuestionTextModel extends QuestionTextBase {
   };
   public onKeyUp = (event: any) => {
     this.updateDateValidationMessage(event);
+    this.updateNumericValue(event);
     if (this.isInputTextUpdate) {
       if (!this._isWaitingForEnter || event.keyCode === 13) {
         this.updateValueOnEvent(event);
@@ -699,8 +809,11 @@ export class QuestionTextModel extends QuestionTextBase {
   private updateDateValidationMessage(event: any): void {
     this.dateValidationMessage = this.isDateInputType && !!event.target ? event.target.validationMessage : undefined;
   }
+  private isClickBlocked() {
+    return this.isReadOnlyAttr && ["color", "range"].indexOf(this.inputType) > -1;
+  }
   public readOnlyBlocker = (event: any) => {
-    if (this.isReadOnlyAttr && ["color", "range"].indexOf(this.inputType) > -1) {
+    if (this.isClickBlocked()) {
       event.preventDefault();
       return true;
     }
@@ -709,23 +822,45 @@ export class QuestionTextModel extends QuestionTextBase {
     if (this.readOnlyBlocker(event)) {
       return;
     }
+    this.setIsValueChanged();
     this.onKeyDownPreprocess && this.onKeyDownPreprocess(event);
+    if (this.inputType === "number" && this.shouldPreventNumberInput(event)) {
+      event.preventDefault();
+      return;
+    }
     if (this.isInputTextUpdate) {
       this._isWaitingForEnter = event.keyCode === 229;
     }
     this.onTextKeyDownHandler(event);
   };
+  private shouldPreventNumberInput(event: any): boolean {
+    const key = event.key;
+
+    // Allow keyboard shortcuts (Ctrl+C, Ctrl+V, etc.)
+    if (event.ctrlKey || event.metaKey || event.altKey) return false;
+
+    // Do not allow "e", "E", or "+" symbols
+    if (["e", "E", "+"].indexOf(key) > -1) return true;
+
+    // Handle "-" symbol
+    // For input type="number", selectionStart is null, so we can only prevent "-" when renderedMin >= 0
+    // When renderedMin is undefined, we'll clean up "-" in onKeyUp event
+    if (key === "-") {
+      if (!Helpers.isValueEmpty(this.renderedMin)) {
+        const minValue = Helpers.getNumber(this.renderedMin);
+        if (!isNaN(minValue) && minValue >= 0) return true;
+      }
+      this.prevNumberValue = event.target?.value || "";
+    }
+    return false;
+  }
   public onChange = (event: any): void => {
-    this._isColorValueChanged = true;
+    this.setIsValueChanged();
     this.updateDateValidationMessage(event);
     const root = getRootNode(this.input);
     if (!root) return;
     const elementIsFocused = event.target === root.activeElement;
-    if (elementIsFocused) {
-      if (this.isInputTextUpdate) {
-        this.updateValueOnEvent(event);
-      }
-    } else {
+    if (!elementIsFocused || this.isInputTextUpdate) {
       this.updateValueOnEvent(event);
     }
     this.updateRemainingCharacterCounter(event.target.value);
@@ -750,6 +885,11 @@ export class QuestionTextModel extends QuestionTextBase {
   public beforeDestroyQuestionElement(el: HTMLElement) {
     this.deleteMaskAdapter();
     this.input = undefined;
+  }
+  public onContainerClick(event: Event) {
+    if (event.target == event.currentTarget && !this.isClickBlocked()) {
+      this.input?.focus();
+    }
   }
 }
 

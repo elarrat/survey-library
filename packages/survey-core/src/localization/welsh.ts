@@ -69,8 +69,12 @@ export var welshSurveyStrings = {
   stepError: "Rhowch werth sy'n cyfateb i faint cam {0}.",
   // [Auto-translated] "The value should not be greater than {0}"
   maxError: "Ni ddylai'r gwerth fod yn fwy na {0}",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "Mewnbwn annilys",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "Ni chaniateir rhifau.",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "Cwblhewch y gwerth er mwyn cydweddu â'r ffurf gofynnol.",
   // "Please enter at least {0} character(s)."
   textMinLength: "Rhowch o leiaf {0} nod.",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var welshSurveyStrings = {
   urlGetChoicesError: "Roedd y cais wedi arwain at ddata gwag neu mae priodwedd y ‘path’ yn anghywir ",
   // "The file size should not exceed {0}."
   exceedMaxSize: "Ddylai’r ffeil ddim bod yn fwy na {0}.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "Beitiau, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "Uchafswm y ffeiliau y gallwch eu llwytho i fyny yw {0}.",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "Ni ellir llwytho ffeiliau i fyny. Ychwanegwch handler ar gyfer y digwyddiad 'onUploadFiles'.",
   // "Response required: enter another value."
@@ -127,8 +135,8 @@ export var welshSurveyStrings = {
   noRowsText: "Nid oes unrhyw ffraeau.",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Rhes {rowIndex}",
-  // "{rowTitle}"
-  rowNameTemplateTitle: "{rowTitle}",
+  // [Auto-translated] "{rowTitle}"
+  rowNameTemplateTitle: "{rhesTeitl}",
   // "Add new"
   addPanel: "Ychwanegu o’r newydd",
   // "Remove"
@@ -153,8 +161,6 @@ export var welshSurveyStrings = {
   savingDataError: "Roedd gwall a doedd dim modd cadw’r canlyniadau.",
   // "The results were saved successfully!"
   savingDataSuccess: "Wedi llwyddo i gadw’r canlyniadau!",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "Mae eich ymateb yn fwy na 64KB. Lleihau maint eich ffeil(iau) a cheisiwch eto neu cysylltwch â pherchennog yr arolwg.",
   // "Try again"
   saveAgainButton: "Rhowch gynnig arall arni",
   // "min"
@@ -238,7 +244,9 @@ export var welshSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "Tabl cynnwys",
   // [Auto-translated] "Progress bar"
-  progressbar: "Bar cynnydd"
+  progressbar: "Bar cynnydd",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "Tudalen {0}"
 };
 
 setupLocale({ localeCode: "cy", strings: welshSurveyStrings, nativeName: "cymraeg", englishName: "Welsh" });

@@ -51,8 +51,8 @@ export var urduSurveyStrings = {
   ratingOptionsCaption: "منتخب...",
   // [Auto-translated] "Select..."
   buttongroupOptionsCaption: "منتخب...",
-  // "value"
-  value: "value",
+  // [Auto-translated] "value"
+  value: "قدر",
   // "Response required."
   requiredError: "براہ کرم سوال کا جواب دیں۔",
   // "Response required: answer at least one question."
@@ -69,8 +69,12 @@ export var urduSurveyStrings = {
   stepError: "براہ کرم کوئی قدر درج کریں جو {0} کے مرحلہ کے سائز سے مماثل ہو۔",
   // "The value should not be greater than {0}"
   maxError: "عدد صفر سے زیادہ نہیں ہونی چاہیے",
+  // [Auto-translated] "Invalid input"
+  invalidInputError: "غلط ان پٹ",
   // [Auto-translated] "Numbers are not allowed."
   textNoDigitsAllow: "نمبروں کی اجازت نہیں ہے۔",
+  // [Auto-translated] "Please complete the value to match the required format."
+  incompletePatternError: "براہ کرم مطلوبہ فارمیٹ کے مطابق ویلیو مکمل کریں۔",
   // "Please enter at least {0} character(s)."
   textMinLength: "براہ کرم کم از کم صفر حروف درج کریں۔",
   // "Please enter no more than {0} character(s)."
@@ -99,6 +103,10 @@ export var urduSurveyStrings = {
   urlGetChoicesError: "درخواست نے خالی ڈیٹا واپس کر دیا۔ یا 'راستہ' پراپرٹی غلط ہے۔",
   // "The file size should not exceed {0}."
   exceedMaxSize: "فائل کا سائز {0} سے زیادہ نہیں ہونا چاہیے.",
+  // [Auto-translated] "Bytes, KB, MB, GB, TB"
+  fileSizeUnits: "بائٹس, KB, MB, GB, TB",
+  // [Auto-translated] "The maximum number of files you can upload is {0}."
+  exceedMaxFiles: "زیادہ سے زیادہ فائلیں جو آپ اپلوڈ کر سکتے ہیں وہ {0} ہے۔",
   // [Auto-translated] "Files cannot be uploaded. Please add a handler for the 'onUploadFiles' event."
   noUploadFilesHandler: "فائلیں اپ لوڈ نہیں کی جا سکتیں۔ براہ کرم 'آن اپ لوڈ فائلز' ایونٹ کے لئے ایک ہینڈلر شامل کریں۔",
   // "Response required: enter another value."
@@ -127,7 +135,7 @@ export var urduSurveyStrings = {
   noRowsText: "کوئی قطار نہیں ہیں۔ ",
   // [Auto-translated] "Row {rowIndex}"
   rowIndexTemplateTitle: "Row {rowIndex}",
-  // "{rowTitle}"
+  // [Auto-translated] "{rowTitle}"
   rowNameTemplateTitle: "{rowTitle}",
   // "Add new"
   addPanel: "نیا شامل کریں",
@@ -153,8 +161,6 @@ export var urduSurveyStrings = {
   savingDataError: "ایک خرابی پیش آگئی اور ہم نتائج کو محفوظ نہیں کر سکے۔",
   // "The results were saved successfully!"
   savingDataSuccess: "نتائج کامیابی سے محفوظ ہو گئے۔",
-  // [Auto-translated] "Your response exceeds 64KB. Please reduce the size of your file(s) and try again or contact the survey owner."
-  savingExceedSize: "آپ کا جواب 64KB سے تجاوز کر گیا ہے۔ براہ کرم اپنی فائل کا سائز کم کریں اور دوبارہ کوشش کریں یا سروے کے مالک سے رابطہ کریں۔",
   // "Try again"
   saveAgainButton: "دوبارہ کوشش کریں",
   // "min"
@@ -238,7 +244,9 @@ export var urduSurveyStrings = {
   // [Auto-translated] "Table of contents"
   toc: "مواد کا جدول",
   // [Auto-translated] "Progress bar"
-  progressbar: "Progress bar"
+  progressbar: "Progress bar",
+  // [Auto-translated] "Page {0}"
+  progressbarPage: "صفحہ {0}"
 };
 
 setupLocale({ localeCode: "ur", strings: urduSurveyStrings, nativeName: "urdu", englishName: "Urdu" });

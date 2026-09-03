@@ -10,9 +10,19 @@ export interface IEqualValuesParameters {
   trimStrings?: boolean;
   doNotConvertNumbers?: boolean;
 }
-export function createDate(reason: string, val?: number | string | Date): Date {
+// What "the current moment" means for one survey. A survey that has no provider reads the machine
+// clock, which is what every application does. A provider is instance state on purpose: two surveys
+// evaluated in the same process, or one evaluated while another waits, never share a clock.
+export interface ISurveyDateProvider {
+  now(): number;
+}
+// owner is the object the date is created for - a survey, or anything that carries its clock. It only
+// matters when there is no value to convert: an explicit date is the date it says it is.
+export function createDate(reason: string, val?: number | string | Date,
+  owner?: { dateProvider?: ISurveyDateProvider }): Date {
   if (!val) {
-    return settings.onDateCreated(new Date(), reason, val);
+    const provider = !!owner ? owner.dateProvider : undefined;
+    return settings.onDateCreated(!!provider ? new Date(provider.now()) : new Date(), reason, val);
   }
   if (!settings.storeUtcDates && typeof val === "string" && isISODateOnly(val)) {
     val += "T00:00:00";
@@ -25,6 +35,15 @@ function isISODateOnly(str: string): boolean {
   if (str.indexOf("T") > 0) return false;
   if (!/\d{4}-\d{2}-\d{2}/.test(str)) return false;
   return !isNaN(new Date(str).getTime());
+}
+
+export function normalizeTextForSearch(text: string, reason: string = "filter"): string {
+  text = settings.comparator.normalizeTextCallback(text, reason);
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0131/g, "i")
+    .toLowerCase();
 }
 
 export class Helpers {
@@ -188,6 +207,8 @@ export class Helpers {
   public static randomizeArray<T>(array: Array<T>, seed?: number): Array<T> {
 
     const shuffle = (array: Array<T>) => {
+      // Sort by `uniqueId` (assigned eagerly in creation order) so the shuffle starts from a
+      // deterministic base order regardless of the array's incoming order.
       array.sort((a: any, b: any) => a.uniqueId - b.uniqueId);
       const random = mulberry32(seed || Date.now());
       for (var i = array.length - 1; i > 0; i--) {

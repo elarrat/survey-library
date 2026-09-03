@@ -425,10 +425,12 @@ export class QuestionMatrixModel
    * @see isRequired
    * @see eachRowUnique
    * @see validators
+   * @since 2.0.0
    */
   @property() eachRowRequired: boolean;
   /**
    * @deprecated Use the [`eachRowRequired`](https://surveyjs.io/form-library/documentation/api-reference/matrix-table-question-model#eachRowRequired) property instead.
+   * @hidden
    */
   public get isAllRowRequired(): boolean {
     return this.eachRowRequired;
@@ -453,10 +455,12 @@ export class QuestionMatrixModel
    * - `"initial"` (default) - Preserves the original order of the `rows` array.
    * - `"random"` - Arranges matrix rows in random order each time the question is displayed.
    * @see rows
+   * @since 2.0.0
    */
   @property({ isLowerCase: true }) rowOrder: string;
   /**
    * @deprecated Use the [`rowOrder`](https://surveyjs.io/form-library/documentation/api-reference/matrix-table-question-model#rowOrder) property instead.
+   * @hidden
    */
   public get rowsOrder(): string {
     return this.rowOrder;
@@ -488,7 +492,7 @@ export class QuestionMatrixModel
   public getItemClass(row: any, column: any): string {
     const isChecked = row.isChecked(column);
     const isDisabled = this.isReadOnly;
-    const allowHover = !isChecked && !isDisabled;
+    const allowHover = !isDisabled && !(!!this.survey && this.survey.isDesignMode);
     const hasCellText = this.hasCellText;
     const css = this.cssClasses;
     return new CssClassBuilder()
@@ -585,7 +589,7 @@ export class QuestionMatrixModel
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       if (this.isValueEmpty(row.value)) continue;
-      const rowId = this.id + "_" + row.value.toString().replace(/\s/g, "_");
+      const rowId = this.renderedId + "_" + row.value.toString().replace(/\s/g, "_");
       result.push(this.createMatrixRow(row, rowId, val[row.value]));
     }
     this.generatedVisibleRows = result;
@@ -697,10 +701,9 @@ export class QuestionMatrixModel
   protected isPropertyStoredInHash(name: string): boolean {
     return name !== "cells" && super.isPropertyStoredInHash(name);
   }
-  protected mergeLocalizationObj(obj: Base, locales?: Array<string>): void {
-    super.mergeLocalizationObj(obj, locales);
-    if (obj instanceof QuestionMatrixModel) {
-      this.cells.mergeWith(obj.cells, locales);
+  protected mergeLocalizationWithInnerObjects(src: Base, locales?: Array<string>): void {
+    if (src instanceof QuestionMatrixModel) {
+      (<any>this.cells).mergeWith(src.cells, locales);
     }
   }
   public get hasCellText(): boolean {
@@ -836,8 +839,11 @@ export class QuestionMatrixModel
         ? ItemValue.getTextOrHtmlByValue(this.rows, key)
         : key;
       if (!newKey) newKey = key;
-      var newValue = ItemValue.getTextOrHtmlByValue(this.columns, value[key]);
-      if (!newValue) newValue = value[key];
+      const val = value[key];
+      var newValue = Array.isArray(val)
+        ? val.map(v => ItemValue.getTextOrHtmlByValue(this.columns, v) || v)
+        : ItemValue.getTextOrHtmlByValue(this.columns, val);
+      if (!newValue) newValue = val;
       res[newKey] = newValue;
     }
     return res;
@@ -851,24 +857,23 @@ export class QuestionMatrixModel
     if (!!questionPlainData) {
       var values = this.createValueCopy();
       questionPlainData.isNode = true;
-      questionPlainData.data = Object.keys(values || {}).map((rowName) => {
-        var row = this.rows.filter(
-          (r: MatrixRowModel) => r.value === rowName
-        )[0];
+      const rows = options.includeEmpty ? this.visibleRows : this.visibleRows.filter((r: MatrixRowModel) => r.name in (values || {}));
+      questionPlainData.data = rows.map((row: MatrixRowModel) => {
+        const rowValue = values ? values[row.name] : undefined;
+        const displayValue = Array.isArray(rowValue)
+          ? rowValue.map(v => ItemValue.getTextOrHtmlByValue(this.visibleColumns, v))
+          : ItemValue.getTextOrHtmlByValue(this.visibleColumns, rowValue);
         var rowDataItem = <any>{
-          name: rowName,
-          title: !!row ? row.text : "row",
-          value: values[rowName],
-          displayValue: ItemValue.getTextOrHtmlByValue(
-            this.visibleColumns,
-            values[rowName]
-          ),
+          name: row.name,
+          title: row.text,
+          value: rowValue,
+          displayValue: displayValue,
           getString: (val: any) => this.getValueAsString(val),
           isNode: false,
         };
         var item = ItemValue.getItemByValue(
           this.visibleColumns,
-          values[rowName]
+          rowValue
         );
         if (!!item) {
           (options.calculations || []).forEach((calculation) => {
@@ -970,7 +975,7 @@ export class QuestionMatrixModel
     const col = ItemValue.getItemByValue(this.columns, val);
     return !!col && col.isVisible ? col : null;
   }
-  protected getFirstInputElementId(): string {
+  protected getFirstInputElementId(): string | (() => HTMLElement) {
     var rows = this.generatedVisibleRows;
     if (!rows) rows = this.visibleRows;
     if (rows.length > 0 && this.visibleColumns.length > 0) {

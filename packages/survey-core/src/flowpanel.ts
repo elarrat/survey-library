@@ -6,10 +6,6 @@ import { LocalizableString } from "./localizablestring";
 import { Question } from "./question";
 import { DomWindowHelper } from "./global_variables_utils";
 
-/**
- * The flow panel object. It is a container with flow layout where you can mix questions with markdown text.
- *
- */
 export class FlowPanelModel extends PanelModel {
   static contentElementNamePrefix = "element:";
   public contentChangedCallback: () => void;
@@ -104,7 +100,7 @@ export class FlowPanelModel extends PanelModel {
     if (!this.isDesignMode || !DomWindowHelper.isAvailable()) return false;
 
     let sel = DomWindowHelper.getSelection();
-    if (sel.getRangeAt && sel.rangeCount) {
+    if (!!sel && sel.getRangeAt && sel.rangeCount) {
       let range = sel.getRangeAt(0);
       range.deleteContents();
       const textElement = new Text(text);

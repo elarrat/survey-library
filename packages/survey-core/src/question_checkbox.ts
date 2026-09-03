@@ -242,6 +242,9 @@ export class QuestionCheckboxModel extends QuestionCheckboxBase {
     isFilteredChoices: boolean = true, checkEmptyValue: boolean = false): boolean {
     return super.hasUnknownValueItem(this.getPropertyNameArray([val]).getValue(0), includeOther, isFilteredChoices, checkEmptyValue);
   }
+  protected hasUnknownValueItemInChoices(val: any, isFilteredChoices: boolean): boolean {
+    return super.hasUnknownValueItemInChoices(this.getPropertyNameArray([val]).getValue(0), isFilteredChoices);
+  }
   protected setCommentValueCore(item: ItemValue, newValue: string): void {
     newValue = this.getTrimmedComment(newValue);
     if (this.isOtherItemByValue(item)) {
@@ -330,15 +333,8 @@ export class QuestionCheckboxModel extends QuestionCheckboxBase {
   }
   public get selectedItems(): Array<ItemValue> { return this.selectedChoices; }
   public get hasFilteredValue(): boolean { return !!this.getValuePropertyName(); }
-  public getFilteredName(): any {
-    let res = super.getFilteredName();
-    if (this.hasFilteredValue) {
-      res += settings.expressionVariables.unwrapPostfix;
-    }
-    return res;
-  }
   public getFilteredValue(isUnwrapped?: boolean): any {
-    if (isUnwrapped && this.hasFilteredValue) return this.renderedValue;
+    if (this.hasFilteredValue && (isUnwrapped || !this.valuePropertyName)) return this.renderedValue;
     return super.getFilteredValue(isUnwrapped);
   }
   protected getMultipleSelectedItems(): Array<ItemValue> {
@@ -564,13 +560,13 @@ export class QuestionCheckboxModel extends QuestionCheckboxBase {
   protected getDisplayValueEmpty(): string {
     return ItemValue.getTextOrHtmlByValue(this.visibleChoices.filter(choice => choice != this.selectAllItemValue), undefined);
   }
-  protected getDisplayValueCore(keysAsText: boolean, value: any): any {
+  protected getDisplayValueCore(keysAsText: boolean, value: any, isReadOnly?: boolean): any {
     if (!Array.isArray(value))
-      return super.getDisplayValueCore(keysAsText, value);
+      return super.getDisplayValueCore(keysAsText, value, isReadOnly);
     const onGetValueCallback = (index: number): any => {
       return this.getPropertyNameArray(value).getValue(index);
     };
-    return this.getDisplayArrayValue(keysAsText, value, onGetValueCallback);
+    return this.getDisplayArrayValue(keysAsText, value, onGetValueCallback, isReadOnly);
   }
   protected clearIncorrectValuesCore(): void {
     this.clearIncorrectAndDisabledValues(false);
@@ -653,7 +649,12 @@ export class QuestionCheckboxModel extends QuestionCheckboxBase {
     return json;
   }
   public isAnswerCorrect(): boolean {
-    return Helpers.isArrayContainsEqual(this.value, this.correctAnswer);
+    return Helpers.isArrayContainsEqual(this.value, this.getCorrectAnswerValue());
+  }
+  protected getCorrectAnswerOnChoicesChanged(val: any): any {
+    if (!Array.isArray(val)) return super.getCorrectAnswerOnChoicesChanged(val);
+    const res = val.filter((item) => this.correctAnswerValueExistsInChoices(item));
+    return res.length > 0 ? res : undefined;
   }
   protected setDefaultValueWithOthers() {
     this.value = this.renderedValueFromDataCore(this.defaultValue);
